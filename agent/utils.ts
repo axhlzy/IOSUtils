@@ -2,6 +2,17 @@ export { }
 
 globalThis.clear = () => console.log('\x1Bc')
 
+globalThis.findSym = (filterName:string, exact: boolean = false, onlyFunction: boolean = false) => {
+    Process.enumerateModules()
+        .forEach(module => {
+            module.enumerateSymbols()
+                .filter(symbol => exact ? symbol.name == filterName : symbol.name.includes(filterName))
+                .filter(symbol => onlyFunction ? symbol.type == 'function' : true)
+                .filter(symbol => !symbol.address.isNull())
+                .forEach(symbol => logd(`${symbol.address} <= ${symbol.name}`))
+        })
+}
+
 // ... 单线程的js 这样只会显示最后的结果 ...
 // 后续改改创建线程来轮询
 export class ProcessDispTask {
@@ -48,5 +59,6 @@ globalThis.ProcessDispTask = ProcessDispTask
 
 declare global {
     var clear: () => void
+    var findSym: (filterName:string, exact?: boolean, onlyFunction?: boolean) => void
     var ProcessDispTask: any
 }

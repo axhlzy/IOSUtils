@@ -1,6 +1,6 @@
 📦
-157 /agent/index.js.map
-44 /agent/index.js
+240 /agent/index.js.map
+99 /agent/index.js
 184 /agent/include.js.map
 72 /agent/include.js
 5901 /agent/logger.js.map
@@ -9,8 +9,12 @@
 46889 /agent/plugin/cipher/cipher.js
 195 /agent/plugin/include.js.map
 89 /agent/plugin/include.js
-157 /agent/plugin/jailbreak/include.js.map
-19 /agent/plugin/jailbreak/include.js
+1815 /agent/plugin/jailbreak/enum.js.map
+7617 /agent/plugin/jailbreak/enum.js
+4768 /agent/plugin/jailbreak/hooks.js.map
+8819 /agent/plugin/jailbreak/hooks.js
+199 /agent/plugin/jailbreak/include.js.map
+60 /agent/plugin/jailbreak/include.js
 132 /agent/plugin/jailbreak/jail.js.map
 10 /agent/plugin/jailbreak/jail.js
 177 /agent/plugin/lang/include.js.map
@@ -27,13 +31,16 @@
 19 /agent/plugin/lang/swift/include.js
 133 /agent/plugin/lang/swift/main.js.map
 10 /agent/plugin/lang/swift/main.js
-1385 /agent/utils.js.map
-1350 /agent/utils.js
+2014 /agent/utils.js.map
+1843 /agent/utils.js
 ✄
-{"version":3,"file":"index.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/index.ts"],"names":[],"mappings":"AAAA,OAAO,cAAc,CAAA;AACrB,OAAO,aAAa,CAAA"}
+{"version":3,"file":"index.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/index.ts"],"names":[],"mappings":"AAAA,OAAO,cAAc,CAAA;AACrB,OAAO,aAAa,CAAA;AAMpB,UAAU,CAAC,CAAC,GAAG,GAAG,EAAE;IAChB,WAAW,CAAC,SAAS,EAAE,CAAA;AAC3B,CAAC,CAAA"}
 ✄
 import './include.js';
 import './logger.js';
+globalThis.d = () => {
+    Interceptor.detachAll();
+};
 ✄
 {"version":3,"file":"include.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/include.ts"],"names":[],"mappings":"AAAA,OAAO,aAAa,CAAA;AACpB,OAAO,YAAY,CAAA;AAEnB,OAAO,qBAAqB,CAAA"}
 ✄
@@ -1185,9 +1192,336 @@ import "./cipher/cipher.js";
 import './jailbreak/include.js';
 import './lang/include.js';
 ✄
-{"version":3,"file":"include.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/jailbreak/include.ts"],"names":[],"mappings":"AAAA,OAAO,WAAW,CAAA"}
+{"version":3,"file":"enum.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/jailbreak/enum.ts"],"names":[],"mappings":"AAAA,GAAG;AACH,KAAK;AACL,0BAA0B;AAC1B,MAAM;AACN,uEAAuE;AACvE,uEAAuE;AACvE,qEAAqE;AACrE,0EAA0E;AAC1E,gEAAgE;AAChE,mEAAmE;AACnE,oEAAoE;AACpE,2EAA2E;AAC3E,2EAA2E;AAC3E,iEAAiE;AACjE,qEAAqE;AACrE,yEAAyE;AACzE,yEAAyE;AACzE,wEAAwE;AACxE,qEAAqE;AACrE,4EAA4E;AAC5E,qEAAqE;AACrE,iFAAiF;AACjF,8EAA8E;AAC9E,6EAA6E;AAC7E,+EAA+E;AAC/E,uEAAuE;AACvE,qDAAqD;AACrD,+EAA+E;AAC/E,yEAAyE;AACzE,+EAA+E;AAC/E,qEAAqE;AACrE,sEAAsE;AACtE,8EAA8E;AAC9E,6EAA6E;AAC7E,2EAA2E;AAC3E,yEAAyE;AACzE,8EAA8E;AAC9E,uDAAuD;AACvD,mEAAmE;AACnE,iEAAiE;AACjE,sEAAsE;AACtE,+EAA+E;AAC/E,qCAAqC;AACrC,8CAA8C;AAC9C,kFAAkF;AAClF,kEAAkE;AAClE,+EAA+E;AAC/E,oDAAoD;AACpD,oDAAoD;AACpD,6EAA6E;AAC7E,oDAAoD;AACpD,8EAA8E;AAC9E,sEAAsE;AACtE,kFAAkF;AAClF,4EAA4E;AAC5E,8BAA8B;AAC9B,qCAAqC;AACrC,oCAAoC;AACpC,+EAA+E;AAC/E,gFAAgF;AAChF,iFAAiF;AACjF,oHAAoH;AACpH,wFAAwF;AACxF,sDAAsD;AACtD,8FAA8F;AAC9F,6FAA6F;AAC7F,qEAAqE;AACrE,sEAAsE;AACtE,8FAA8F;AAC9F,sEAAsE;AACtE,yFAAyF;AACzF,2FAA2F;AAC3F,4FAA4F;AAC5F,4EAA4E;AAC5E,oEAAoE;AACpE,yCAAyC;AACzC,qCAAqC;AACrC,mEAAmE;AACnE,oGAAoG;AACpG,oEAAoE;AACpE,yEAAyE;AAEzE,MAAM,CAAN,IAAY,QAYX;AAZD,WAAY,QAAQ;IAChB,2DAAkB,CAAA;IAClB,0DAAkB,CAAA;IAClB,sDAAgB,CAAA;IAChB,4DAAmB,CAAA;IACnB,oDAAe,CAAA;IACf,kDAAc,CAAA;IACd,kDAAc,CAAA;IACd,kDAAc,CAAA;IACd,sDAAgB,CAAA;IAChB,wDAAiB,CAAA;IACjB,KAAK;AACT,CAAC,EAZW,QAAQ,KAAR,QAAQ,QAYnB;AAGD,kBAAkB;AAClB,uDAAuD;AACvD,4EAA4E;AAC5E,+DAA+D;AAC/D,gFAAgF;AAChF,sEAAsE;AACtE,qEAAqE;AACrE,+DAA+D;AAC/D,kEAAkE;AAClE,2DAA2D;AAC3D,8EAA8E;AAE9E,MAAM,CAAN,IAAY,QAWX;AAXD,WAAY,QAAQ;IAChB,mDAAc,CAAA;IACd,+CAAY,CAAA;IACZ,2CAAU,CAAA;IACV,6CAAW,CAAA;IACX,6CAAW,CAAA;IACX,iDAAa,CAAA;IACb,2CAAU,CAAA;IACV,qDAAe,CAAA;IACf,+CAAY,CAAA;IACZ,iDAAa,CAAA;AACjB,CAAC,EAXW,QAAQ,KAAR,QAAQ,QAWnB"}
+✄
+// 
+// /*
+//  * CTL_KERN identifiers
+//  */
+// #define KERN_OSTYPE              1      /* string: system version */
+// #define KERN_OSRELEASE           2      /* string: system release */
+// #define KERN_OSREV               3      /* int: system revision */
+// #define KERN_VERSION             4      /* string: compile time info */
+// #define KERN_MAXVNODES           5      /* int: max vnodes */
+// #define KERN_MAXPROC             6      /* int: max processes */
+// #define KERN_MAXFILES            7      /* int: max open files */
+// #define KERN_ARGMAX              8      /* int: max arguments to exec */
+// #define KERN_SECURELVL           9      /* int: system security level */
+// #define KERN_HOSTNAME           10      /* string: hostname */
+// #define KERN_HOSTID             11      /* int: host identifier */
+// #define KERN_CLOCKRATE          12      /* struct: struct clockrate */
+// #define KERN_VNODE              13      /* struct: vnode structures */
+// #define KERN_PROC               14      /* struct: process entries */
+// #define KERN_FILE               15      /* struct: file entries */
+// #define KERN_PROF               16      /* node: kernel profiling info */
+// #define KERN_POSIX1             17      /* int: POSIX.1 version */
+// #define KERN_NGROUPS            18      /* int: # of supplemental group ids */
+// #define KERN_JOB_CONTROL        19      /* int: is job control available */
+// #define KERN_SAVED_IDS          20      /* int: saved set-user/group-ID */
+// #define KERN_BOOTTIME           21      /* struct: time kernel was booted */
+// #define KERN_NISDOMAINNAME      22      /* string: YP domain name */
+// #define KERN_DOMAINNAME         KERN_NISDOMAINNAME
+// #define KERN_MAXPARTITIONS      23      /* int: number of partitions/disk */
+// #define KERN_KDEBUG             24      /* int: kernel trace points */
+// #define KERN_UPDATEINTERVAL     25      /* int: update process sleep time */
+// #define KERN_OSRELDATE          26      /* int: OS release date */
+// #define KERN_NTP_PLL            27      /* node: NTP PLL control */
+// #define KERN_BOOTFILE           28      /* string: name of booted kernel */
+// #define KERN_MAXFILESPERPROC    29      /* int: max open files per proc */
+// #define KERN_MAXPROCPERUID      30      /* int: max processes per uid */
+// #define KERN_DUMPDEV            31      /* dev_t: device to dump on */
+// #define KERN_IPC                32      /* node: anything related to IPC */
+// #define KERN_DUMMY              33      /* unused */
+// #define KERN_PS_STRINGS 34      /* int: address of PS_STRINGS */
+// #define KERN_USRSTACK32 35      /* int: address of USRSTACK */
+// #define KERN_LOGSIGEXIT 36      /* int: do we log sigexit procs? */
+// #define KERN_SYMFILE            37      /* string: kernel symbol filename */
+// #define KERN_PROCARGS           38
+// /* 39 was KERN_PCSAMPLES... now obsolete */
+// #define KERN_NETBOOT            40      /* int: are we netbooted? 1=yes,0=no */
+// /* 41 was KERN_PANICINFO : panic UI information (deprecated) */
+// #define KERN_SYSV               42      /* node: System V IPC information */
+// #define KERN_AFFINITY           43      /* xxx */
+// #define KERN_TRANSLATE          44      /* xxx */
+// #define KERN_CLASSIC            KERN_TRANSLATE  /* XXX backwards compat */
+// #define KERN_EXEC               45      /* xxx */
+// #define KERN_CLASSICHANDLER     KERN_EXEC /* XXX backwards compatibility */
+// #define KERN_AIOMAX             46      /* int: max aio requests */
+// #define KERN_AIOPROCMAX         47      /* int: max aio requests per process */
+// #define KERN_AIOTHREADS         48      /* int: max aio worker threads */
+// #ifdef __APPLE_API_UNSTABLE
+// #define KERN_PROCARGS2          49
+// #endif /* __APPLE_API_UNSTABLE */
+// #define KERN_COREFILE           50      /* string: corefile format string */
+// #define KERN_COREDUMP           51      /* int: whether to coredump at all */
+// #define KERN_SUGID_COREDUMP     52      /* int: whether to dump SUGID cores */
+// #define KERN_PROCDELAYTERM      53      /* int: set/reset current proc for delayed termination during shutdown */
+// #define KERN_SHREG_PRIVATIZABLE 54      /* int: can shared regions be privatized ? */
+// /* 55 was KERN_PROC_LOW_PRI_IO... now deprecated */
+// #define KERN_LOW_PRI_WINDOW     56      /* int: set/reset throttle window - milliseconds */
+// #define KERN_LOW_PRI_DELAY      57      /* int: set/reset throttle delay - milliseconds */
+// #define KERN_POSIX              58      /* node: posix tunables */
+// #define KERN_USRSTACK64         59      /* LP64 user stack query */
+// #define KERN_NX_PROTECTION      60      /* int: whether no-execute protection is enabled */
+// #define KERN_TFP                61      /* Task for pid settings */
+// #define KERN_PROCNAME           62      /* setup process program  name(2*MAXCOMLEN) */
+// #define KERN_THALTSTACK         63      /* for compat with older x86 and does nothing */
+// #define KERN_SPECULATIVE_READS  64      /* int: whether speculative reads are disabled */
+// #define KERN_OSVERSION          65      /* for build number i.e. 9A127 */
+// #define KERN_SAFEBOOT           66      /* are we booted safe? */
+// /*	67 was KERN_LCTX (login context) */
+// #define KERN_RAGEVNODE          68
+// #define KERN_TTY                69      /* node: tty settings */
+// #define KERN_CHECKOPENEVT       70      /* spi: check the VOPENEVT flag on vnodes at open time */
+// #define KERN_THREADNAME         71      /* set/get thread name */
+// #define KERN_MAXID              72      /* number of valid kern ids */
+export var CTL_KERN;
+(function (CTL_KERN) {
+    CTL_KERN[CTL_KERN["KERN_SECURELVL"] = 9] = "KERN_SECURELVL";
+    CTL_KERN[CTL_KERN["KERN_HOSTNAME"] = 10] = "KERN_HOSTNAME";
+    CTL_KERN[CTL_KERN["KERN_HOSTID"] = 11] = "KERN_HOSTID";
+    CTL_KERN[CTL_KERN["KERN_CLOCKRATE"] = 12] = "KERN_CLOCKRATE";
+    CTL_KERN[CTL_KERN["KERN_VNODE"] = 13] = "KERN_VNODE";
+    CTL_KERN[CTL_KERN["KERN_PROC"] = 14] = "KERN_PROC";
+    CTL_KERN[CTL_KERN["KERN_FILE"] = 15] = "KERN_FILE";
+    CTL_KERN[CTL_KERN["KERN_PROF"] = 16] = "KERN_PROF";
+    CTL_KERN[CTL_KERN["KERN_POSIX1"] = 17] = "KERN_POSIX1";
+    CTL_KERN[CTL_KERN["KERN_NGROUPS"] = 18] = "KERN_NGROUPS";
+    //...
+})(CTL_KERN || (CTL_KERN = {}));
+// 第一个name数组可以包含以下
+// #define CTL_UNSPEC      0               /* unused */
+// #define CTL_KERN        1               /* "high kernel": proc, limits */
+// #define CTL_VM          2               /* virtual memory */
+// #define CTL_VFS         3               /* file system, mount type is next */
+// #define CTL_NET         4               /* network, see socket.h */
+// #define CTL_DEBUG       5               /* debugging parameters */
+// #define CTL_HW          6               /* generic cpu/io */
+// #define CTL_MACHDEP     7               /* machine dependent */
+// #define CTL_USER        8               /* user-level */
+// #define CTL_MAXID       9               /* number of valid top-level ids */
+export var CTLT_YPE;
+(function (CTLT_YPE) {
+    CTLT_YPE[CTLT_YPE["CTL_UNSPEC"] = 0] = "CTL_UNSPEC";
+    CTLT_YPE[CTLT_YPE["CTL_KERN"] = 1] = "CTL_KERN";
+    CTLT_YPE[CTLT_YPE["CTL_VM"] = 2] = "CTL_VM";
+    CTLT_YPE[CTLT_YPE["CTL_VFS"] = 3] = "CTL_VFS";
+    CTLT_YPE[CTLT_YPE["CTL_NET"] = 4] = "CTL_NET";
+    CTLT_YPE[CTLT_YPE["CTL_DEBUG"] = 5] = "CTL_DEBUG";
+    CTLT_YPE[CTLT_YPE["CTL_HW"] = 6] = "CTL_HW";
+    CTLT_YPE[CTLT_YPE["CTL_MACHDEP"] = 7] = "CTL_MACHDEP";
+    CTLT_YPE[CTLT_YPE["CTL_USER"] = 8] = "CTL_USER";
+    CTLT_YPE[CTLT_YPE["CTL_MAXID"] = 9] = "CTL_MAXID";
+})(CTLT_YPE || (CTLT_YPE = {}));
+✄
+{"version":3,"file":"hooks.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/jailbreak/hooks.ts"],"names":[],"mappings":"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"}
+✄
+// import { CTLT_YPE } from "./enum"
+// The string that may be detected
+const JbPaths = [
+    "/Applications/Cydia.app",
+    "/usr/sbin/sshd",
+    "/bin/bash",
+    "/etc/apt",
+    "/Library/MobileSubstrate",
+    "/User/Applications/"
+];
+const detectedArray = [
+    "Cydia",
+];
+const checkIfContainJbPaths = (str) => {
+    return JbPaths.some(item => str.includes(item));
+};
+export const hook_stat = () => {
+    // int stat(const char *, struct stat *)
+    // 成功返回 0  失败返回 -1
+    // #define __DARWIN_STRUCT_STAT64 { \
+    // 	dev_t		st_dev;                 /* [XSI] ID of device containing file */ \ 设备编号
+    // 	mode_t		st_mode;                /* [XSI] Mode of file (see below) */ \  文件类型及权限
+    // 	nlink_t		st_nlink;               /* [XSI] Number of hard links */ \ 硬链接数量
+    // 	__darwin_ino64_t st_ino;                /* [XSI] File serial number */ \ inode 编号
+    // 	uid_t		st_uid;                 /* [XSI] User ID of the file */ \ 拥有者的用户 ID
+    // 	gid_t		st_gid;                 /* [XSI] Group ID of the file */ \ 拥有者的组 ID
+    // 	dev_t		st_rdev;                /* [XSI] Device ID */ \
+    // 	__DARWIN_STRUCT_STAT64_TIMES \
+    // 	off_t		st_size;                /* [XSI] file size, in bytes */ \ 文件大小（以字节为单位）
+    // 	blkcnt_t	st_blocks;              /* [XSI] blocks allocated for file */ \
+    // 	blksize_t	st_blksize;             /* [XSI] optimal blocksize for I/O */ \
+    // 	__uint32_t	st_flags;               /* user defined flags for file */ \
+    // 	__uint32_t	st_gen;                 /* file generation number */ \
+    // 	__int32_t	st_lspare;              /* RESERVED: DO NOT USE! */ \
+    // 	__int64_t	st_qspare[2];           /* RESERVED: DO NOT USE! */ \
+    // }
+    const addr = Module.findExportByName("libsystem_kernel.dylib", "stat");
+    Interceptor.attach(addr, {
+        onEnter(args) {
+            this.disp = `stat ( '${args[0].readCString()}', ${args[1]} )`;
+        },
+        onLeave(retval) {
+            if (checkIfContainJbPaths(this.disp)) {
+                loge(`${retval} <= ${this.disp}`);
+                retval.replace(ptr(-1));
+            }
+            else {
+                logd(`${retval} <= ${this.disp}`);
+            }
+        }
+    });
+};
+const hook_NSString_IsEqualToString = () => {
+    const addr = ptr(ObjC.classes["NSString"]["- isEqualToString:"].implementation);
+    Interceptor.attach(addr, {
+        onEnter(args) {
+            logw("NSString - isEqualToString");
+            let thiz = new ObjC.Object(args[0]);
+            let SEL = ObjC.selectorAsString(args[1]);
+            let str = new ObjC.Object(args[1]).toString();
+            this.disp = `${thiz} ${SEL} ${str}`;
+        },
+        onLeave(retval) {
+            if (checkIfContainJbPaths(this.disp)) {
+                loge(`${retval} <= ${this.disp}`);
+            }
+            else {
+                logd(`${retval} <= ${this.disp}`);
+            }
+        }
+    });
+};
+// dladdr
+const hook_dladdr = () => {
+    const addr = Module.findExportByName("libsystem_kernel.dylib", "dladdr");
+    Interceptor.attach(addr, {
+        onEnter(args) {
+            // typedef struct dl_info {
+            //         const char      *dli_fname;     /* Pathname of shared object */
+            //         void            *dli_fbase;     /* Base address of shared object */
+            //         const char      *dli_sname;     /* Name of nearest symbol */
+            //         void            *dli_saddr;     /* Address of nearest symbol */
+            // } Dl_info;
+            this.disp = `dladdr ( ${args[0]}, ${args[1]} )`;
+        },
+        onLeave(retval) {
+            if (checkIfContainJbPaths(this.disp)) { }
+        }
+    });
+};
+// hook isDebugged
+// 校验当前进程是否为调试模式，hook sysctl方法可以绕过
+// Returns true if the current process is being debugged (either
+// running under the debugger or has a debugger attached post facto).
+// Thanks to https://developer.apple.com/library/archive/qa/qa1361/_index.html
+// sysctl 是一个用于查询和设置内核参数的系统调用。它主要用于获取或更改系统信息，例如 CPU 类型、内存大小，以及其他系统级别的配置
+// int sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
+// 成功返回 0 失败返回 -1
+/**
+ * IMPL ↓
+ * BOOL isDebugged()
+{
+    int junk;
+    int mib[4];
+    struct kinfo_proc info;
+    size_t size;
+    info.kp_proc.p_flag = 0; // 指向存储查询结果的缓冲区的指针,如果只是想设置系统参数,设置为NULL
+    mib[0] = CTL_KERN;  // 整数数组，用于指定要查询或设置的系统参数 0x4
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = getpid();
+    size = sizeof(info);
+    junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
+    assert(junk == 0);
+    return ( (info.kp_proc.p_flag & P_TRACED) != 0 );
+}
+ */
+// Process.enumerateModules()
+//     .forEach(module => {
+//         module.enumerateSymbols()
+//         .forEach(symbol => {
+//             if (symbol.name.includes("sysctl") && !symbol.address.isNull()) {
+//                 logd(`${symbol.address} <= ${symbol.name}`)
+//             }
+//         })
+//     })
+const hook_isDebugged = () => {
+    logd("hook_isDebugged");
+    // DebugSymbol.fromName("sysctl")
+    // {
+    //     "address": "0x101214e30",
+    //     "column": 0,
+    //     "fileName": "",
+    //     "lineNumber": 0,
+    //     "moduleName": "dyld",
+    //     "name": "sysctl"
+    // }
+    let addr_sysctl = Module.findExportByName("libsystem_c.dylib", "sysctl");
+    // addr_sysctl = DebugSymbol.fromName("sysctl").address <- 这里被坑了 重名符号 返回的是最后一个
+    Interceptor.attach(addr_sysctl, {
+        onEnter(args) {
+            logw("ENTER sysctl");
+            // junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
+            // int sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
+            this.disp = `sysctl ( name=${args[0]}, namelen=${args[1]}, oldp=${args[2]}, oldlenp=${args[3]}, newp=${args[4]}, newlen${args[5]} )`;
+            let tmp = '';
+            for (let i = 0; i < args[1].toInt32(); i++) { // int* ++
+                // if (i == 0) {
+                //     tmp += `${CTLT_YPE[args[0].readInt()].toString()} | `
+                // } else {
+                tmp += `${[args[0].add(i).readInt()].toString()} | `;
+                // }
+            }
+            this.disp1 = tmp.substring(0, tmp.length - 3);
+            this.info = args[2];
+        },
+        onLeave(retval) {
+            logd(`${retval} <= ${this.disp}`);
+            logz(`\t${this.disp1}`);
+            // struct kinfo_proc {
+            // struct  extern_proc kp_proc;                    /* proc structure */
+            // struct  eproc {
+            // 	struct  proc *e_paddr;          /* address of proc */
+            // 	struct  session *e_sess;        /* session pointer */
+            // 	struct  _pcred e_pcred;         /* process credentials */
+            // 由上可见就是第一个结构体
+            // struct extern_proc {
+            // 	union {
+            // 		struct {
+            // 			struct  proc *__p_forw; /* Doubly-linked run/sleep queue. */
+            // 			struct  proc *__p_back;
+            // 		} p_st1;
+            // 		struct timeval __p_starttime;   /* process start time */
+            // 	} p_un;
+            // #define p_forw p_un.p_st1.__p_forw
+            // #define p_back p_un.p_st1.__p_back
+            // #define p_starttime p_un.__p_starttime
+            // 	struct  vmspace *p_vmspace;     /* Address space. */
+            // 	struct  sigacts *p_sigacts;     /* Signal actions, state (PROC ONLY). */
+            // 	int     p_flag;                 /* P_* flags. */
+            // (lldb) p/a &(info.kp_proc)
+            // (extern_proc *) 0x000000016ef08ef0
+            // (lldb) p/a &(info.kp_proc.p_flag)
+            // (int *) 0x000000016ef08f10
+            // ofset 0x20 = pointersize * 4
+            // p/x info.kp_proc.p_flag => (int) 0x04004804
+            // p/x  ~0x800 & 0x04004804 
+            // #define P_TRACED        0x00000800      /* Debugged process being traced */
+            let p_flag_addr = ptr(this.info).add(Process.pointerSize * 4);
+            logd(`${p_flag_addr} => ${p_flag_addr.readPointer()}`);
+            if (p_flag_addr.readInt() & 0x00000800) {
+                loge(`! isDebugged`);
+                p_flag_addr.writePointer(p_flag_addr.readPointer().and(~0x00000800));
+            }
+        }
+    });
+};
+globalThis.hook_stat = hook_stat;
+globalThis.hook_NSString_IsEqualToString = hook_NSString_IsEqualToString;
+globalThis.hook_isDebugged = hook_isDebugged;
+✄
+{"version":3,"file":"include.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/jailbreak/include.ts"],"names":[],"mappings":"AAAA,OAAO,WAAW,CAAA;AAClB,OAAO,WAAW,CAAA;AAElB,OAAO,YAAY,CAAA"}
 ✄
 import './jail.js';
+import './enum.js';
+import './hooks.js';
 ✄
 {"version":3,"file":"jail.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/jailbreak/jail.ts"],"names":[],"mappings":""}
 ✄
@@ -1344,9 +1678,19 @@ import './main.js';
 ✄
 export {};
 ✄
-{"version":3,"file":"utils.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/utils.ts"],"names":[],"mappings":"AAEA,UAAU,CAAC,KAAK,GAAG,GAAG,EAAE,CAAC,OAAO,CAAC,GAAG,CAAC,OAAO,CAAC,CAAA;AAE7C,6BAA6B;AAC7B,cAAc;AACd,MAAM,OAAO,eAAe;IAQxB,YAAY,MAAc,GAAG,EAAE,cAAsB,IAAI;QAPjD,iBAAY,GAAW,GAAG,CAAA;QAC1B,iBAAY,GAAW,GAAG,CAAA,CAAC,KAAK;QAChC,qBAAgB,GAAW,CAAC,CAAA;QAC5B,mBAAc,GAAW,YAAY,CAAA;QAErC,mBAAc,GAAY,KAAK,CAAA,CAAC,YAAY;QAGhD,IAAI,CAAC,YAAY,GAAG,GAAG,CAAA;QACvB,IAAI,CAAC,YAAY,GAAG,WAAW,CAAA;QAC/B,IAAI,CAAC,gBAAgB,GAAG,CAAC,CAAA;QACzB,IAAI,CAAC,KAAK,EAAE,CAAA;IAChB,CAAC;IAEM,MAAM,CAAC,GAAW;QACrB,IAAI,CAAC,YAAY,GAAG,GAAG,CAAA;IAC3B,CAAC;IAEO,KAAK;QACT,IAAI,CAAC,cAAc,GAAG,IAAI,CAAA;QAC1B,IAAI,CAAC,OAAO,GAAG,WAAW,CAAC,GAAG,EAAE;YAC5B,IAAI,IAAI,CAAC,gBAAgB,IAAI,IAAI,CAAC,YAAY;gBAAE,IAAI,CAAC,IAAI,EAAE,CAAA;YAC3D,IAAI,CAAC,IAAI,CAAC,cAAc;gBAAE,OAAM;YAChC,OAAO,CAAC,GAAG,CAAC,OAAO,CAAC,CAAA;YACpB,OAAO,CAAC,IAAI,CAAC,GAAG,IAAI,CAAC,cAAc,IAAI,IAAI,CAAC,gBAAgB,GAAG,GAAG,GAAG,IAAI,CAAC,YAAY,KAAK,CAAC,CAAA;QAChG,CAAC,EAAE,IAAI,CAAC,YAAY,CAAC,CAAA;IACzB,CAAC;IAEM,IAAI;QACP,aAAa,CAAC,IAAI,CAAC,OAAO,CAAC,CAAA;QAC3B,IAAI,CAAC,cAAc,GAAG,KAAK,CAAA;QAC3B,OAAO,CAAC,GAAG,CAAC,GAAG,IAAI,CAAC,cAAc,IAAI,IAAI,CAAC,gBAAgB,GAAG,GAAG,GAAG,IAAI,CAAC,YAAY,GAAG,CAAC,CAAA;IAC7F,CAAC;IAEM,MAAM,CAAC,QAAgB;QAC1B,IAAI,CAAC,gBAAgB,GAAG,QAAQ,CAAA;IACpC,CAAC;CACJ;AAED,UAAU,CAAC,eAAe,GAAG,eAAe,CAAA"}
+{"version":3,"file":"utils.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/utils.ts"],"names":[],"mappings":"AAEA,UAAU,CAAC,KAAK,GAAG,GAAG,EAAE,CAAC,OAAO,CAAC,GAAG,CAAC,OAAO,CAAC,CAAA;AAE7C,UAAU,CAAC,OAAO,GAAG,CAAC,UAAiB,EAAE,QAAiB,KAAK,EAAE,eAAwB,KAAK,EAAE,EAAE;IAC9F,OAAO,CAAC,gBAAgB,EAAE;SACrB,OAAO,CAAC,MAAM,CAAC,EAAE;QACd,MAAM,CAAC,gBAAgB,EAAE;aACpB,MAAM,CAAC,MAAM,CAAC,EAAE,CAAC,KAAK,CAAC,CAAC,CAAC,MAAM,CAAC,IAAI,IAAI,UAAU,CAAC,CAAC,CAAC,MAAM,CAAC,IAAI,CAAC,QAAQ,CAAC,UAAU,CAAC,CAAC;aACtF,MAAM,CAAC,MAAM,CAAC,EAAE,CAAC,YAAY,CAAC,CAAC,CAAC,MAAM,CAAC,IAAI,IAAI,UAAU,CAAC,CAAC,CAAC,IAAI,CAAC;aACjE,MAAM,CAAC,MAAM,CAAC,EAAE,CAAC,CAAC,MAAM,CAAC,OAAO,CAAC,MAAM,EAAE,CAAC;aAC1C,OAAO,CAAC,MAAM,CAAC,EAAE,CAAC,IAAI,CAAC,GAAG,MAAM,CAAC,OAAO,OAAO,MAAM,CAAC,IAAI,EAAE,CAAC,CAAC,CAAA;IACvE,CAAC,CAAC,CAAA;AACV,CAAC,CAAA;AAED,6BAA6B;AAC7B,cAAc;AACd,MAAM,OAAO,eAAe;IAQxB,YAAY,MAAc,GAAG,EAAE,cAAsB,IAAI;QAPjD,iBAAY,GAAW,GAAG,CAAA;QAC1B,iBAAY,GAAW,GAAG,CAAA,CAAC,KAAK;QAChC,qBAAgB,GAAW,CAAC,CAAA;QAC5B,mBAAc,GAAW,YAAY,CAAA;QAErC,mBAAc,GAAY,KAAK,CAAA,CAAC,YAAY;QAGhD,IAAI,CAAC,YAAY,GAAG,GAAG,CAAA;QACvB,IAAI,CAAC,YAAY,GAAG,WAAW,CAAA;QAC/B,IAAI,CAAC,gBAAgB,GAAG,CAAC,CAAA;QACzB,IAAI,CAAC,KAAK,EAAE,CAAA;IAChB,CAAC;IAEM,MAAM,CAAC,GAAW;QACrB,IAAI,CAAC,YAAY,GAAG,GAAG,CAAA;IAC3B,CAAC;IAEO,KAAK;QACT,IAAI,CAAC,cAAc,GAAG,IAAI,CAAA;QAC1B,IAAI,CAAC,OAAO,GAAG,WAAW,CAAC,GAAG,EAAE;YAC5B,IAAI,IAAI,CAAC,gBAAgB,IAAI,IAAI,CAAC,YAAY;gBAAE,IAAI,CAAC,IAAI,EAAE,CAAA;YAC3D,IAAI,CAAC,IAAI,CAAC,cAAc;gBAAE,OAAM;YAChC,OAAO,CAAC,GAAG,CAAC,OAAO,CAAC,CAAA;YACpB,OAAO,CAAC,IAAI,CAAC,GAAG,IAAI,CAAC,cAAc,IAAI,IAAI,CAAC,gBAAgB,GAAG,GAAG,GAAG,IAAI,CAAC,YAAY,KAAK,CAAC,CAAA;QAChG,CAAC,EAAE,IAAI,CAAC,YAAY,CAAC,CAAA;IACzB,CAAC;IAEM,IAAI;QACP,aAAa,CAAC,IAAI,CAAC,OAAO,CAAC,CAAA;QAC3B,IAAI,CAAC,cAAc,GAAG,KAAK,CAAA;QAC3B,OAAO,CAAC,GAAG,CAAC,GAAG,IAAI,CAAC,cAAc,IAAI,IAAI,CAAC,gBAAgB,GAAG,GAAG,GAAG,IAAI,CAAC,YAAY,GAAG,CAAC,CAAA;IAC7F,CAAC;IAEM,MAAM,CAAC,QAAgB;QAC1B,IAAI,CAAC,gBAAgB,GAAG,QAAQ,CAAA;IACpC,CAAC;CACJ;AAED,UAAU,CAAC,eAAe,GAAG,eAAe,CAAA"}
 ✄
 globalThis.clear = () => console.log('\x1Bc');
+globalThis.findSym = (filterName, exact = false, onlyFunction = false) => {
+    Process.enumerateModules()
+        .forEach(module => {
+        module.enumerateSymbols()
+            .filter(symbol => exact ? symbol.name == filterName : symbol.name.includes(filterName))
+            .filter(symbol => onlyFunction ? symbol.type == 'function' : true)
+            .filter(symbol => !symbol.address.isNull())
+            .forEach(symbol => logd(`${symbol.address} <= ${symbol.name}`));
+    });
+};
 // ... 单线程的js 这样只会显示最后的结果 ...
 // 后续改改创建线程来轮询
 export class ProcessDispTask {
