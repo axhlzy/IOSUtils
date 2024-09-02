@@ -11,8 +11,8 @@
 89 /agent/plugin/include.js
 1815 /agent/plugin/jailbreak/enum.js.map
 7617 /agent/plugin/jailbreak/enum.js
-4768 /agent/plugin/jailbreak/hooks.js.map
-8819 /agent/plugin/jailbreak/hooks.js
+12683 /agent/plugin/jailbreak/hooks.js.map
+19696 /agent/plugin/jailbreak/hooks.js
 199 /agent/plugin/jailbreak/include.js.map
 60 /agent/plugin/jailbreak/include.js
 132 /agent/plugin/jailbreak/jail.js.map
@@ -25,8 +25,8 @@
 60 /agent/plugin/lang/oc/include.js
 295 /agent/plugin/lang/oc/method.js.map
 167 /agent/plugin/lang/oc/method.js
-4212 /agent/plugin/lang/oc/oc.js.map
-3798 /agent/plugin/lang/oc/oc.js
+4073 /agent/plugin/lang/oc/oc.js.map
+3727 /agent/plugin/lang/oc/oc.js
 158 /agent/plugin/lang/swift/include.js.map
 19 /agent/plugin/lang/swift/include.js
 133 /agent/plugin/lang/swift/main.js.map
@@ -1314,25 +1314,26 @@ export var CTLT_YPE;
     CTLT_YPE[CTLT_YPE["CTL_MAXID"] = 9] = "CTL_MAXID";
 })(CTLT_YPE || (CTLT_YPE = {}));
 ✄
-{"version":3,"file":"hooks.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/jailbreak/hooks.ts"],"names":[],"mappings":"AAAA,oCAAoC;AAEpC,kCAAkC;AAClC,MAAM,OAAO,GAAG;IACZ,yBAAyB;IACzB,gBAAgB;IAChB,WAAW;IACX,UAAU;IACV,0BAA0B;IAC1B,qBAAqB;CACxB,CAAA;AAED,MAAM,aAAa,GAAa;IAC5B,OAAO;CACV,CAAA;AAED,MAAM,qBAAqB,GAAG,CAAC,GAAW,EAAW,EAAE;IACnD,OAAO,OAAO,CAAC,IAAI,CAAC,IAAI,CAAC,EAAE,CAAC,GAAG,CAAC,QAAQ,CAAC,IAAI,CAAC,CAAC,CAAA;AACnD,CAAC,CAAA;AAED,MAAM,CAAC,MAAM,SAAS,GAAG,GAAG,EAAE;IAE1B,wCAAwC;IACxC,kBAAkB;IAElB,qCAAqC;IACrC,kFAAkF;IAClF,mFAAmF;IACnF,6EAA6E;IAC7E,qFAAqF;IACrF,8EAA8E;IAC9E,8EAA8E;IAC9E,0DAA0D;IAC1D,kCAAkC;IAClC,iFAAiF;IACjF,4EAA4E;IAC5E,6EAA6E;IAC7E,0EAA0E;IAC1E,qEAAqE;IACrE,mEAAmE;IACnE,mEAAmE;IACnE,IAAI;IAEJ,MAAM,IAAI,GAAG,MAAM,CAAC,gBAAgB,CAAC,wBAAwB,EAAE,MAAM,CAAE,CAAA;IACvE,WAAW,CAAC,MAAM,CAAC,IAAI,EAAE;QACrB,OAAO,CAAC,IAAI;YACR,IAAI,CAAC,IAAI,GAAG,WAAW,IAAI,CAAC,CAAC,CAAC,CAAC,WAAW,EAAE,MAAM,IAAI,CAAC,CAAC,CAAC,IAAI,CAAA;QACjE,CAAC;QACD,OAAO,CAAC,MAAM;YACV,IAAI,qBAAqB,CAAC,IAAI,CAAC,IAAI,CAAC,EAAE;gBAClC,IAAI,CAAC,GAAG,MAAM,OAAO,IAAI,CAAC,IAAI,EAAE,CAAC,CAAA;gBACjC,MAAM,CAAC,OAAO,CAAC,GAAG,CAAC,CAAC,CAAC,CAAC,CAAC,CAAA;aAC1B;iBAAM;gBACH,IAAI,CAAC,GAAG,MAAM,OAAO,IAAI,CAAC,IAAI,EAAE,CAAC,CAAA;aACpC;QACL,CAAC;KACJ,CAAC,CAAA;AAEN,CAAC,CAAA;AAED,MAAM,6BAA6B,GAAG,GAAE,EAAE;IACtC,MAAM,IAAI,GAAG,GAAG,CAAC,IAAI,CAAC,OAAO,CAAC,UAAU,CAAC,CAAC,oBAAoB,CAAC,CAAC,cAAc,CAAC,CAAA;IAC/E,WAAW,CAAC,MAAM,CAAC,IAAI,EAAE;QACrB,OAAO,CAAC,IAAI;YACR,IAAI,CAAC,4BAA4B,CAAC,CAAA;YAClC,IAAI,IAAI,GAAG,IAAI,IAAI,CAAC,MAAM,CAAC,IAAI,CAAC,CAAC,CAAC,CAAC,CAAA;YACnC,IAAI,GAAG,GAAG,IAAI,CAAC,gBAAgB,CAAC,IAAI,CAAC,CAAC,CAAC,CAAC,CAAA;YACxC,IAAI,GAAG,GAAG,IAAI,IAAI,CAAC,MAAM,CAAC,IAAI,CAAC,CAAC,CAAC,CAAC,CAAC,QAAQ,EAAE,CAAA;YAC7C,IAAI,CAAC,IAAI,GAAG,GAAG,IAAI,IAAI,GAAG,IAAI,GAAG,EAAE,CAAA;QACvC,CAAC;QACD,OAAO,CAAC,MAAM;YACV,IAAI,qBAAqB,CAAC,IAAI,CAAC,IAAI,CAAC,EAAE;gBAClC,IAAI,CAAC,GAAG,MAAM,OAAO,IAAI,CAAC,IAAI,EAAE,CAAC,CAAA;aACpC;iBAAM;gBACH,IAAI,CAAC,GAAG,MAAM,OAAO,IAAI,CAAC,IAAI,EAAE,CAAC,CAAA;aACpC;QACL,CAAC;KACJ,CAAC,CAAA;AACN,CAAC,CAAA;AAED,SAAS;AACT,MAAM,WAAW,GAAG,GAAG,EAAE;IACrB,MAAM,IAAI,GAAG,MAAM,CAAC,gBAAgB,CAAC,wBAAwB,EAAE,QAAQ,CAAE,CAAA;IACzE,WAAW,CAAC,MAAM,CAAC,IAAI,EAAE;QACrB,OAAO,CAAC,IAAI;YAER,2BAA2B;YAC3B,0EAA0E;YAC1E,8EAA8E;YAC9E,uEAAuE;YACvE,0EAA0E;YAC1E,aAAa;YAEb,IAAI,CAAC,IAAI,GAAG,YAAY,IAAI,CAAC,CAAC,CAAC,KAAK,IAAI,CAAC,CAAC,CAAC,IAAI,CAAA;QACnD,CAAC;QACD,OAAO,CAAC,MAAM;YACV,IAAI,qBAAqB,CAAC,IAAI,CAAC,IAAI,CAAC,EAAE,GAAE;QAC5C,CAAC;KACJ,CAAC,CAAA;AACN,CAAC,CAAA;AAED,kBAAkB;AAClB,kCAAkC;AAClC,gEAAgE;AAChE,qEAAqE;AACrE,8EAA8E;AAE9E,uEAAuE;AACvE,sGAAsG;AACtG,iBAAiB;AAEjB;;;;;;;;;;;;;;;;;;GAkBG;AAEH,6BAA6B;AAC7B,2BAA2B;AAC3B,oCAAoC;AACpC,+BAA+B;AAC/B,gFAAgF;AAChF,8DAA8D;AAC9D,gBAAgB;AAChB,aAAa;AACb,SAAS;AAGT,MAAM,eAAe,GAAG,GAAG,EAAE;IACzB,IAAI,CAAC,iBAAiB,CAAC,CAAA;IAEvB,iCAAiC;IACjC,IAAI;IACJ,gCAAgC;IAChC,mBAAmB;IACnB,sBAAsB;IACtB,uBAAuB;IACvB,4BAA4B;IAC5B,uBAAuB;IACvB,IAAI;IAEJ,IAAI,WAAW,GAAG,MAAM,CAAC,gBAAgB,CAAC,mBAAmB,EAAE,QAAQ,CAAE,CAAA;IAEzE,8EAA8E;IAE9E,WAAW,CAAC,MAAM,CAAC,WAAW,EAAE;QAC5B,OAAO,CAAC,IAAI;YAER,IAAI,CAAC,cAAc,CAAC,CAAA;YAEpB,yEAAyE;YACzE,sGAAsG;YACtG,IAAI,CAAC,IAAI,GAAG,iBAAiB,IAAI,CAAC,CAAC,CAAC,aAAa,IAAI,CAAC,CAAC,CAAC,UAAU,IAAI,CAAC,CAAC,CAAC,aAAa,IAAI,CAAC,CAAC,CAAC,UAAU,IAAI,CAAC,CAAC,CAAC,WAAW,IAAI,CAAC,CAAC,CAAC,IAAI,CAAA;YACpI,IAAI,GAAG,GAAW,EAAE,CAAA;YACpB,KAAK,IAAI,CAAC,GAAG,CAAC,EAAE,CAAC,GAAG,IAAI,CAAC,CAAC,CAAC,CAAC,OAAO,EAAE,EAAE,CAAC,EAAE,EAAE,EAAG,UAAU;gBACrD,gBAAgB;gBAChB,4DAA4D;gBAC5D,WAAW;gBACP,GAAG,IAAI,GAAG,CAAC,IAAI,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,CAAC,CAAC,OAAO,EAAE,CAAC,CAAC,QAAQ,EAAE,KAAK,CAAA;gBACxD,IAAI;aACP;YACD,IAAI,CAAC,KAAK,GAAG,GAAG,CAAC,SAAS,CAAC,CAAC,EAAE,GAAG,CAAC,MAAM,GAAG,CAAC,CAAC,CAAA;YAC7C,IAAI,CAAC,IAAI,GAAG,IAAI,CAAC,CAAC,CAAC,CAAA;QACvB,CAAC;QACD,OAAO,CAAC,MAAM;YACV,IAAI,CAAC,GAAG,MAAM,OAAO,IAAI,CAAC,IAAI,EAAE,CAAC,CAAA;YACjC,IAAI,CAAC,KAAK,IAAI,CAAC,KAAK,EAAE,CAAC,CAAA;YAEvB,sBAAsB;YACtB,uEAAuE;YACvE,kBAAkB;YAClB,yDAAyD;YACzD,yDAAyD;YACzD,6DAA6D;YAE7D,eAAe;YAEf,uBAAuB;YACvB,WAAW;YACX,aAAa;YACb,kEAAkE;YAClE,6BAA6B;YAC7B,aAAa;YACb,6DAA6D;YAC7D,WAAW;YACX,qCAAqC;YACrC,qCAAqC;YACrC,yCAAyC;YACzC,wDAAwD;YACxD,4EAA4E;YAC5E,oDAAoD;YAEpD,6BAA6B;YAC7B,qCAAqC;YACrC,oCAAoC;YACpC,6BAA6B;YAC7B,+BAA+B;YAE/B,8CAA8C;YAC9C,4BAA4B;YAE5B,8EAA8E;YAC9E,IAAI,WAAW,GAAG,GAAG,CAAC,IAAI,CAAC,IAAI,CAAC,CAAC,GAAG,CAAC,OAAO,CAAC,WAAW,GAAG,CAAC,CAAC,CAAA;YAC7D,IAAI,CAAC,GAAG,WAAW,OAAO,WAAW,CAAC,WAAW,EAAE,EAAE,CAAC,CAAA;YACtD,IAAI,WAAW,CAAC,OAAO,EAAE,GAAG,UAAU,EAAE;gBACpC,IAAI,CAAC,cAAc,CAAC,CAAA;gBACpB,WAAW,CAAC,YAAY,CAAC,WAAW,CAAC,WAAW,EAAE,CAAC,GAAG,CAAC,CAAC,UAAU,CAAC,CAAC,CAAA;aACvE;QACL,CAAC;KACJ,CAAC,CAAA;AAEN,CAAC,CAAA;AAQD,UAAU,CAAC,SAAS,GAAG,SAAS,CAAA;AAChC,UAAU,CAAC,6BAA6B,GAAG,6BAA6B,CAAA;AACxE,UAAU,CAAC,eAAe,GAAG,eAAe,CAAA"}
+{"version":3,"file":"hooks.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/jailbreak/hooks.ts"],"names":[],"mappings":"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"}
 ✄
 // import { CTLT_YPE } from "./enum"
-// The string that may be detected
-const JbPaths = [
-    "/Applications/Cydia.app",
-    "/usr/sbin/sshd",
-    "/bin/bash",
-    "/etc/apt",
-    "/Library/MobileSubstrate",
-    "/User/Applications/"
-];
-const detectedArray = [
-    "Cydia",
-];
+const SLOG = true; // simple log
 const checkIfContainJbPaths = (str) => {
+    // The string that may be detected
+    const JbPaths = [
+        "/Applications/Cydia.app",
+        "/usr/sbin/sshd",
+        "/bin/bash",
+        "/etc/apt",
+        "/Library/MobileSubstrate",
+        "/User/Applications/",
+        "/private/var/lib/apt/",
+        "/private/var/lib/cydia/",
+    ];
     return JbPaths.some(item => str.includes(item));
 };
 export const hook_stat = () => {
+    logd("hook stat & lstat");
     // int stat(const char *, struct stat *)
     // 成功返回 0  失败返回 -1
     // #define __DARWIN_STRUCT_STAT64 { \
@@ -1363,12 +1364,31 @@ export const hook_stat = () => {
                 retval.replace(ptr(-1));
             }
             else {
-                logd(`${retval} <= ${this.disp}`);
+                if (!SLOG)
+                    logd(`${retval} <= ${this.disp}`);
+            }
+        }
+    });
+    // int     lstat(const char *, struct stat *) __DARWIN_INODE64(lstat);
+    const addr2 = Module.findExportByName("libsystem_kernel.dylib", "lstat");
+    Interceptor.attach(addr2, {
+        onEnter(args) {
+            this.disp = `lstat ( '${args[0].readCString()}', ${args[1]} )`;
+        },
+        onLeave(retval) {
+            if (checkIfContainJbPaths(this.disp)) {
+                loge(`${retval} <= ${this.disp}`);
+                retval.replace(ptr(-1));
+            }
+            else {
+                if (!SLOG)
+                    logd(`${retval} <= ${this.disp}`);
             }
         }
     });
 };
 const hook_NSString_IsEqualToString = () => {
+    logd("hook NSString_IsEqualToString");
     const addr = ptr(ObjC.classes["NSString"]["- isEqualToString:"].implementation);
     Interceptor.attach(addr, {
         onEnter(args) {
@@ -1383,7 +1403,8 @@ const hook_NSString_IsEqualToString = () => {
                 loge(`${retval} <= ${this.disp}`);
             }
             else {
-                logd(`${retval} <= ${this.disp}`);
+                if (!SLOG)
+                    logd(`${retval} <= ${this.disp}`);
             }
         }
     });
@@ -1443,7 +1464,9 @@ const hook_dladdr = () => {
 //         })
 //     })
 const hook_isDebugged = () => {
-    logd("hook_isDebugged");
+    logd("hook sysctl | isDebugged");
+    let addr_sysctl = Module.findExportByName("libsystem_c.dylib", "sysctl");
+    // addr_sysctl = DebugSymbol.fromName("sysctl").address <- 这里被坑了 重名符号 返回的是最后一个
     // DebugSymbol.fromName("sysctl")
     // {
     //     "address": "0x101214e30",
@@ -1453,11 +1476,8 @@ const hook_isDebugged = () => {
     //     "moduleName": "dyld",
     //     "name": "sysctl"
     // }
-    let addr_sysctl = Module.findExportByName("libsystem_c.dylib", "sysctl");
-    // addr_sysctl = DebugSymbol.fromName("sysctl").address <- 这里被坑了 重名符号 返回的是最后一个
     Interceptor.attach(addr_sysctl, {
         onEnter(args) {
-            logw("ENTER sysctl");
             // junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
             // int sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
             this.disp = `sysctl ( name=${args[0]}, namelen=${args[1]}, oldp=${args[2]}, oldlenp=${args[3]}, newp=${args[4]}, newlen${args[5]} )`;
@@ -1505,17 +1525,260 @@ const hook_isDebugged = () => {
             // p/x  ~0x800 & 0x04004804 
             // #define P_TRACED        0x00000800      /* Debugged process being traced */
             let p_flag_addr = ptr(this.info).add(Process.pointerSize * 4);
-            logd(`${p_flag_addr} => ${p_flag_addr.readPointer()}`);
+            logz(`\t${p_flag_addr} => ${p_flag_addr.readPointer()}`);
             if (p_flag_addr.readInt() & 0x00000800) {
-                loge(`! isDebugged`);
+                loge(`\t! bypass isDebug`);
                 p_flag_addr.writePointer(p_flag_addr.readPointer().and(~0x00000800));
             }
         }
     });
 };
+// _dyld_get_image_name
+const hook_get_image_name = () => {
+    logd("hook dyld_get_image_name");
+    // extern const char* _dyld_get_image_name(uint32_t image_index) 
+    // __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);
+    const addr = Module.findExportByName("libdyld.dylib", "_dyld_get_image_name");
+    Interceptor.attach(addr, {
+        onEnter(args) {
+            this.disp = `dyld_get_image_name ( index=${args[0]} | ${args[0].toInt32()} )`;
+        },
+        onLeave(retval) {
+            const ret_str = retval.readCString();
+            if (ret_str == null)
+                return;
+            const disp_str = `${this.disp} => '${ret_str}'`;
+            if (ret_str.includes("substitute")
+                || ret_str.includes("substrate")
+                || ret_str.includes("CepheiUI")) {
+                loge(disp_str);
+                const new_ret = ret_str
+                    .replace("substitute", "---")
+                    .replace("substrate", "---")
+                    .replace("CepheiUI", "---");
+                retval.replace(Memory.allocUtf8String(new_ret));
+                console.log('called from:\n' +
+                    Thread.backtrace(this.context, Backtracer.ACCURATE)
+                        .map(DebugSymbol.fromAddress).join('\n') + '\n');
+                return;
+            }
+            if (!SLOG)
+                logd(disp_str);
+        }
+    });
+};
+const hook_canOpenURL = () => {
+    logd("hook canOpenURL");
+    const old_Method_canOpenURL = ObjC.classes["UIApplication"]["- canOpenURL:"];
+    const old_impl = old_Method_canOpenURL.implementation;
+    old_Method_canOpenURL.implementation = ObjC.implement(old_Method_canOpenURL, function (clazz, selector, URLString) {
+        // [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"cydia://package/com.avl.com"]]
+        const disp = `canOpenURL ( ${new ObjC.Object(clazz)}, ${ObjC.selectorAsString(selector)}, ${new ObjC.Object(URLString)} )`;
+        let retval = old_impl(clazz, selector, URLString);
+        if (disp.includes("cydia")) {
+            loge(`${retval} <= ${disp}`);
+            retval = 0;
+        }
+        else {
+            if (!SLOG)
+                logd(`${retval} <= ${disp}`);
+        }
+        return retval;
+    });
+};
+const hook_URLWithString = () => {
+    logd("hook URLWithString");
+    const old_func = ObjC.classes.NSURL.URLWithString_;
+    const old_impl = old_func.implementation;
+    old_func.implementation = ObjC.implement(old_func, function (clazz, selector, URLString) {
+        let toCString = new ObjC.Object(URLString).toString();
+        const disp = `URLWithString ( '${toCString}' )`;
+        if (disp.includes("cydia")) {
+            URLString = ObjC.classes.NSString.stringWithString_(toCString.replace("cydia", "ccc"));
+            loge(`${disp}`);
+        }
+        else {
+            if (!SLOG)
+                logd(`${disp}`);
+        }
+        return old_impl(clazz, selector, URLString);
+    });
+};
+const hook_NSFileManager = () => {
+    logd("hook NSFileManager");
+    const checksArray = [
+        "/Application/Cydia.app",
+        "/Library/MobileSubstrate/MobileSubstrate.dylib",
+        "/bin/bash",
+        "/usr/sbin/sshd",
+        "/etc/apt",
+        "/usr/bin/ssh",
+        "/private/var/lib/apt",
+        "/private/var/lib/cydia",
+        "/private/var/tmp/cydia.log",
+        "/Applications/WinterBoard.app",
+        "/var/lib/cydia",
+        "/private/etc/dpkg/origins/debian",
+        "/bin.sh",
+        "/private/etc/apt",
+        "/etc/ssh/sshd_config",
+        "/private/etc/ssh/sshd_config",
+        "/Applications/SBSetttings.app",
+        "/private/var/mobileLibrary/SBSettingsThemes/",
+        "/private/var/stash",
+        "/usr/libexec/sftp-server",
+        "/usr/libexec/cydia/",
+        "/usr/sbin/frida-server",
+        "/usr/bin/cycript",
+        "/usr/local/bin/cycript",
+        "/usr/lib/libcycript.dylib",
+        "/System/Library/LaunchDaemons/com.saurik.Cydia.Startup.plist",
+        "/System/Library/LaunchDaemons/com.ikey.bbot.plist",
+        "/Applications/FakeCarrier.app",
+        "/Library/MobileSubstrate/DynamicLibraries/Veency.plist",
+        "/Library/MobileSubstrate/DynamicLibraries/LiveClock.plist",
+        "/usr/libexec/ssh-keysign",
+        "/usr/libexec/sftp-server",
+        "/Applications/blackra1n.app",
+        "/Applications/IntelliScreen.app",
+        "/Applications/Snoop-itConfig.app",
+        "/var/lib/dpkg/info"
+    ];
+    // - fileExistsAtPath:isDirectory:
+    // - (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(nullable BOOL *)isDirectory;
+    const old_func = ObjC.classes.NSFileManager["- fileExistsAtPath:isDirectory:"];
+    const old_impl = old_func.implementation;
+    old_func.implementation = ObjC.implement(old_func, function (clazz, selector, fileExistsAtPath, isDirectory) {
+        if (!fileExistsAtPath)
+            return old_impl(clazz, selector, fileExistsAtPath, isDirectory);
+        const toCString = new ObjC.Object(fileExistsAtPath).toString();
+        const disp = `fileExistsAtPath:isDirectory: ( '${toCString}', ${isDirectory} )`;
+        if (checksArray.includes(toCString)) {
+            loge(`${disp}`);
+            // fileExistsAtPath = ObjC.classes.NSString.stringWithString_("zzzz")
+            return 0;
+        }
+        else if (!SLOG) {
+            logd(`${disp}`);
+        }
+        return old_impl(clazz, selector, fileExistsAtPath, isDirectory);
+    });
+    // fopen
+    // FILE	*fopen(const char * __restrict __filename, const char * __restrict __mode)
+    Interceptor.attach(Module.findExportByName("libsystem_c.dylib", "fopen"), {
+        onEnter(args) {
+            const fileName = args[0].readCString();
+            if (fileName != null) {
+                const disp = `fopen ( ${fileName} )`;
+                if (checksArray.includes(fileName)) {
+                    loge(`${disp}`);
+                    args[0] = Memory.allocUtf8String("zzzz");
+                }
+                else if (!SLOG) {
+                    logd(`${disp}`);
+                }
+            }
+        }
+    });
+};
+const hook_getenv = () => {
+    logd("hook getenv");
+    // getenv
+    // char	*getenv(const char *);
+    Interceptor.attach(Module.findExportByName("libsystem_c.dylib", "getenv"), {
+        onEnter(args) {
+            this.envName = args[0].readCString();
+        },
+        onLeave(retval) {
+            const disp = `getenv ( ${this.envName} ) | ret: '${retval.readCString()}'`;
+            if (this.envName != null && this.envName == "DYLD_INSERT_LIBRARIES") {
+                loge(`${disp}`);
+                retval.replace(NULL);
+            }
+            else if (!SLOG) {
+                logd(`${disp}`);
+            }
+        }
+    });
+};
+const hook_ptrace = () => {
+    logd("hook ptrace");
+    // void mRiYXNnZnZmZGF2Ym() {
+    //     // No Need to encode these strings, because they will be directly compiled, they are not going to be present in the 'DATA' segment of the binary.
+    //     __asm (
+    //         "mov r0, #31\n" // set #define PT_DENY_ATTACH (31) to r0
+    //         "mov r1, #0\n"   // clear r1
+    //         "mov r2, #0\n"   // clear r2
+    //         "mov r3, #0\n"   // clear r3
+    //         "mov ip, #26\n"  // set the instruction pointer to syscal 26
+    //         "svc #0x80\n"    // SVC (formerly SWI) generates a supervisor call. Supervisor calls are normally used to request privileged operations or access to system resources from an operating system
+    //         );
+    // }
+    // ptrace(PT_DENY_ATTACH, 0, 0, 0);
+    // ↑ 还有可能是使用系统调用实现 这里不做处理 trace指令查看svc调用 不在这里实现 ↑
+    // int ptrace(int request, pid_t pid, caddr_t addr, int data);
+    // #define PT_DENY_ATTACH 31
+    const PT_DENY_ATTACH = 31;
+    const addr = Module.findExportByName("libsystem_kernel.dylib", "ptrace");
+    const srcCall = new NativeFunction(addr, "int", ["int", "int", "pointer", "int"]);
+    Interceptor.replace(Module.findExportByName("libsystem_kernel.dylib", "ptrace"), new NativeCallback((request, pid, addr, data) => {
+        loge(`called ptrace( ${request}, ${pid}, ${addr}, ${data} )`);
+        if (request == PT_DENY_ATTACH)
+            return 0;
+        return srcCall(request, pid, addr, data);
+    }, "int", ["int", "int", "pointer", "int"]));
+};
+const hook_NSClassFromString = () => {
+    logd("hook NSClassFromString");
+    // 从类名获取类 类似java的Class.forName
+    const checkArray = [
+        "HBPreferences", // 用于以越狱环境下从偏好设置读取配置项
+    ];
+    // FOUNDATION_EXPORT Class _Nullable NSClassFromString(NSString *aClassName);
+    Interceptor.attach(Module.findExportByName("Foundation", "NSClassFromString"), {
+        onEnter(args) {
+            // Foundation -> -[NSString(NSStringOtherEncodings) UTF8String]
+            try {
+                // this.className = new ObjC.Object(args[0]).UTF8String()
+                this.className = new ObjC.Object(args[0]).toString();
+            }
+            catch (error) {
+                this.className = '';
+            }
+        },
+        onLeave(retval) {
+            if (checkArray.includes(this.className)) {
+                loge(`${retval} <= NSClassFromString( '${this.className}' )`);
+            }
+            else {
+                if (!SLOG)
+                    logd(`${retval} <= ${this.className}`);
+            }
+        }
+    });
+};
+globalThis.hook_all_detect = () => {
+    hook_stat();
+    // hook_NSString_IsEqualToString()
+    // hook_isDebugged()
+    hook_get_image_name();
+    hook_canOpenURL();
+    hook_URLWithString();
+    hook_NSFileManager();
+    hook_getenv();
+    hook_ptrace();
+    hook_NSClassFromString();
+};
 globalThis.hook_stat = hook_stat;
 globalThis.hook_NSString_IsEqualToString = hook_NSString_IsEqualToString;
 globalThis.hook_isDebugged = hook_isDebugged;
+globalThis.hook_get_image_name = hook_get_image_name;
+globalThis.hook_canOpenURL = hook_canOpenURL;
+globalThis.hook_URLWithString = hook_URLWithString;
+globalThis.hook_NSFileManager = hook_NSFileManager;
+globalThis.hook_getenv = hook_getenv;
+globalThis.hook_ptrace = hook_ptrace;
+globalThis.hook_NSClassFromString = hook_NSClassFromString;
 ✄
 {"version":3,"file":"include.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/jailbreak/include.ts"],"names":[],"mappings":"AAAA,OAAO,WAAW,CAAA;AAClB,OAAO,WAAW,CAAA;AAElB,OAAO,YAAY,CAAA"}
 ✄
@@ -1562,18 +1825,13 @@ export class ObjCMethodIMPL extends ObjC.Object {
 }
 globalThis.ObjC.Method = ObjCMethodIMPL;
 ✄
-{"version":3,"file":"oc.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/lang/oc/oc.ts"],"names":[],"mappings":"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"}
+{"version":3,"file":"oc.js","sourceRoot":"D:/IOS/IOSUtils/","sources":["agent/plugin/lang/oc/oc.ts"],"names":[],"mappings":"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"}
 ✄
 var cacheAllClass = [];
 globalThis.cacheAllClass = cacheAllClass;
 const getCachedClasses = () => {
-    if (cacheAllClass.length == 0) {
-        for (const clzName in ObjC.classes) {
-            if (ObjC.classes.hasOwnProperty(clzName)) {
-                cacheAllClass.push(ObjC.classes[clzName]);
-            }
-        }
-    }
+    if (cacheAllClass.length === 0)
+        cacheAllClass = Object.values(ObjC.classes);
     return cacheAllClass;
 };
 // findMethodsByResolver("-[NSString *stringWith*]")
@@ -1597,15 +1855,18 @@ globalThis.showMethods = (clsNameOrPtr, filter = '', includeParent = false) => {
         localPtr = ptr(clsNameOrPtr);
     else if (typeof clsNameOrPtr == "string")
         localPtr = ObjC.classes[clsNameOrPtr].$class.handle;
+    else if (clsNameOrPtr instanceof NativePointer)
+        localPtr = clsNameOrPtr;
     if (localPtr == NULL)
         throw new Error("classNameOrPtr is not a valid pointer");
     newLine();
     let obj = new ObjC.Object(localPtr);
+    logw(`[ ${obj.$className} ] ${obj.$class.handle}`);
     includeParent ? obj.$methods : obj.$ownMethods
         .filter(m => m.includes(filter))
         .map((m, i) => {
         try {
-            return `[ ${i} ]\t M: ${ObjC.classes[obj.$className][`${m.substring(2).replace(':', '_')}`].implementation} ${m}`;
+            return `[ ${i} ]\t M: ${ObjC.classes[obj.$className][m].implementation} ${m}`;
         }
         catch (error) {
             return `[ ${i} ]\t C: ${ObjC.classes[obj.$className].handle} ${m}`;
@@ -1626,20 +1887,20 @@ globalThis.findMethods = (query, className, accurate = false) => {
     }
     newLine();
     function ItorClassMethods(cls, query, accurate) {
-        let methods = cls.$ownMethods.filter((m) => accurate ? m == query : m.includes(query));
+        const methods = cls.$ownMethods.filter((m) => accurate ? m == query : m.includes(query));
         if (methods.length != 0)
             logw(`\n[!] ${cls.handle} | ${methods.length} | ${cls.$className} \n`);
         methods
-            .map((m) => {
+            .map(m => {
             try {
-                return `M: ${cls[`${m.substring(2).replace(':', '_')}`].implementation} ${m}`;
+                return `M: ${cls[m].implementation} ${m}`;
             }
             catch (error) {
                 return `C: ${cls.handle} ${m}`;
             }
         })
             .sort((a, b) => b[0].localeCompare(a[0]))
-            .map(m => `[ ${count++} ]\t ${m}`)
+            .map(m => `[ ${count++} ]\t${m}`)
             .forEach(logd);
     }
 };

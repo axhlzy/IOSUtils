@@ -1,24 +1,24 @@
 // import { CTLT_YPE } from "./enum"
 
-// The string that may be detected
-const JbPaths = [
-    "/Applications/Cydia.app",
-    "/usr/sbin/sshd",
-    "/bin/bash",
-    "/etc/apt",
-    "/Library/MobileSubstrate",
-    "/User/Applications/"
-]
-
-const detectedArray: string[] = [
-    "Cydia",
-]
+const SLOG: boolean = true // simple log
 
 const checkIfContainJbPaths = (str: string): boolean => {
+    // The string that may be detected
+    const JbPaths = [
+        "/Applications/Cydia.app",
+        "/usr/sbin/sshd",
+        "/bin/bash",
+        "/etc/apt",
+        "/Library/MobileSubstrate",
+        "/User/Applications/",
+        "/private/var/lib/apt/",
+        "/private/var/lib/cydia/",
+    ]
     return JbPaths.some(item => str.includes(item))
 }
 
 export const hook_stat = () => {
+    logd("hook stat & lstat")
 
     // int stat(const char *, struct stat *)
     // 成功返回 0  失败返回 -1
@@ -51,14 +51,31 @@ export const hook_stat = () => {
                 loge(`${retval} <= ${this.disp}`)
                 retval.replace(ptr(-1))
             } else {
-                logd(`${retval} <= ${this.disp}`)
+                if (!SLOG) logd(`${retval} <= ${this.disp}`)
             }
         }
     })
-    
+
+    // int     lstat(const char *, struct stat *) __DARWIN_INODE64(lstat);
+    const addr2 = Module.findExportByName("libsystem_kernel.dylib", "lstat")!
+    Interceptor.attach(addr2, {
+        onEnter(args) {
+            this.disp = `lstat ( '${args[0].readCString()}', ${args[1]} )`
+        },
+        onLeave(retval) {
+            if (checkIfContainJbPaths(this.disp)) {
+                loge(`${retval} <= ${this.disp}`)
+                retval.replace(ptr(-1))
+            } else {
+                if (!SLOG) logd(`${retval} <= ${this.disp}`)
+            }
+        }
+    })
+
 }
 
-const hook_NSString_IsEqualToString = ()=>{
+const hook_NSString_IsEqualToString = () => {
+    logd("hook NSString_IsEqualToString")
     const addr = ptr(ObjC.classes["NSString"]["- isEqualToString:"].implementation)
     Interceptor.attach(addr, {
         onEnter(args) {
@@ -72,7 +89,7 @@ const hook_NSString_IsEqualToString = ()=>{
             if (checkIfContainJbPaths(this.disp)) {
                 loge(`${retval} <= ${this.disp}`)
             } else {
-                logd(`${retval} <= ${this.disp}`)
+                if (!SLOG) logd(`${retval} <= ${this.disp}`)
             }
         }
     })
@@ -94,7 +111,7 @@ const hook_dladdr = () => {
             this.disp = `dladdr ( ${args[0]}, ${args[1]} )`
         },
         onLeave(retval) {
-            if (checkIfContainJbPaths(this.disp)) {}
+            if (checkIfContainJbPaths(this.disp)) { }
         }
     })
 }
@@ -139,9 +156,12 @@ const hook_dladdr = () => {
 //         })
 //     })
 
-
 const hook_isDebugged = () => {
-    logd("hook_isDebugged")
+    logd("hook sysctl | isDebugged")
+
+    let addr_sysctl = Module.findExportByName("libsystem_c.dylib", "sysctl")!
+
+    // addr_sysctl = DebugSymbol.fromName("sysctl").address <- 这里被坑了 重名符号 返回的是最后一个
 
     // DebugSymbol.fromName("sysctl")
     // {
@@ -153,24 +173,17 @@ const hook_isDebugged = () => {
     //     "name": "sysctl"
     // }
 
-    let addr_sysctl = Module.findExportByName("libsystem_c.dylib", "sysctl")!
-    
-    // addr_sysctl = DebugSymbol.fromName("sysctl").address <- 这里被坑了 重名符号 返回的是最后一个
-
     Interceptor.attach(addr_sysctl, {
         onEnter(args) {
-
-            logw("ENTER sysctl")
-
             // junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
             // int sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
             this.disp = `sysctl ( name=${args[0]}, namelen=${args[1]}, oldp=${args[2]}, oldlenp=${args[3]}, newp=${args[4]}, newlen${args[5]} )`
-            let tmp :string = ''
+            let tmp: string = ''
             for (let i = 0; i < args[1].toInt32(); i++) {  // int* ++
                 // if (i == 0) {
                 //     tmp += `${CTLT_YPE[args[0].readInt()].toString()} | `
                 // } else {
-                    tmp += `${[args[0].add(i).readInt()].toString()} | ` 
+                tmp += `${[args[0].add(i).readInt()].toString()} | `
                 // }
             }
             this.disp1 = tmp.substring(0, tmp.length - 3)
@@ -215,9 +228,9 @@ const hook_isDebugged = () => {
 
             // #define P_TRACED        0x00000800      /* Debugged process being traced */
             let p_flag_addr = ptr(this.info).add(Process.pointerSize * 4)
-            logd(`${p_flag_addr} => ${p_flag_addr.readPointer()}`)
+            logz(`\t${p_flag_addr} => ${p_flag_addr.readPointer()}`)
             if (p_flag_addr.readInt() & 0x00000800) {
-                loge(`! isDebugged`)
+                loge(`\t! bypass isDebug`)
                 p_flag_addr.writePointer(p_flag_addr.readPointer().and(~0x00000800))
             }
         }
@@ -225,12 +238,273 @@ const hook_isDebugged = () => {
 
 }
 
+// _dyld_get_image_name
+const hook_get_image_name = () => {
+    logd("hook dyld_get_image_name")
+
+    // extern const char* _dyld_get_image_name(uint32_t image_index) 
+    // __OSX_AVAILABLE_STARTING(__MAC_10_1, __IPHONE_2_0);
+    const addr = Module.findExportByName("libdyld.dylib", "_dyld_get_image_name")!
+    Interceptor.attach(addr, {
+        onEnter(args) {
+            this.disp = `dyld_get_image_name ( index=${args[0]} | ${args[0].toInt32()} )`
+        },
+        onLeave(retval) {
+            const ret_str = retval.readCString()
+            if (ret_str == null) return
+            const disp_str = `${this.disp} => '${ret_str}'`
+            if (ret_str.includes("substitute")
+                || ret_str.includes("substrate")
+                || ret_str.includes("CepheiUI")
+            ) {
+                loge(disp_str)
+                const new_ret = ret_str
+                    .replace("substitute", "---")
+                    .replace("substrate", "---")
+                    .replace("CepheiUI", "---")
+                retval.replace(Memory.allocUtf8String(new_ret))
+                console.log('called from:\n' +
+                    Thread.backtrace(this.context, Backtracer.ACCURATE)
+                    .map(DebugSymbol.fromAddress).join('\n') + '\n');
+                return
+            }
+            if (!SLOG) logd(disp_str)
+        }
+    })
+
+}
+
+const hook_canOpenURL = () => {
+    logd("hook canOpenURL")
+
+    const old_Method_canOpenURL = ObjC.classes["UIApplication"]["- canOpenURL:"]
+    const old_impl = old_Method_canOpenURL.implementation
+    old_Method_canOpenURL.implementation = ObjC.implement(old_Method_canOpenURL,
+        function (clazz, selector, URLString) {
+            // [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"cydia://package/com.avl.com"]]
+            const disp = `canOpenURL ( ${new ObjC.Object(clazz)}, ${ObjC.selectorAsString(selector)}, ${new ObjC.Object(URLString)} )` as string
+            let retval = old_impl(clazz, selector, URLString) as number
+            if (disp.includes("cydia")) {
+                loge(`${retval} <= ${disp}`)
+                retval = 0
+            } else {
+                if (!SLOG) logd(`${retval} <= ${disp}`)
+            }
+            return retval
+        })
+}
+
+const hook_URLWithString = () => {
+    logd("hook URLWithString")
+
+    const old_func = ObjC.classes.NSURL.URLWithString_
+    const old_impl = old_func.implementation
+    old_func.implementation = ObjC.implement(old_func, function (clazz, selector, URLString) {
+        let toCString: string = new ObjC.Object(URLString).toString()
+        const disp: string = `URLWithString ( '${toCString}' )`
+        if (disp.includes("cydia")) {
+            URLString = ObjC.classes.NSString.stringWithString_(toCString.replace("cydia", "ccc"))
+            loge(`${disp}`)
+        } else {
+            if (!SLOG) logd(`${disp}`)
+        }
+        return old_impl(clazz, selector, URLString)
+    })
+}
+
+const hook_NSFileManager = () => {
+    logd("hook NSFileManager")
+
+    const checksArray = [
+        "/Application/Cydia.app",
+        "/Library/MobileSubstrate/MobileSubstrate.dylib",
+        "/bin/bash",
+        "/usr/sbin/sshd",
+        "/etc/apt",
+        "/usr/bin/ssh",
+        "/private/var/lib/apt",
+        "/private/var/lib/cydia",
+        "/private/var/tmp/cydia.log",
+        "/Applications/WinterBoard.app",
+        "/var/lib/cydia",
+        "/private/etc/dpkg/origins/debian",
+        "/bin.sh",
+        "/private/etc/apt",
+        "/etc/ssh/sshd_config",
+        "/private/etc/ssh/sshd_config",
+        "/Applications/SBSetttings.app",
+        "/private/var/mobileLibrary/SBSettingsThemes/",
+        "/private/var/stash",
+        "/usr/libexec/sftp-server",
+        "/usr/libexec/cydia/",
+        "/usr/sbin/frida-server",
+        "/usr/bin/cycript",
+        "/usr/local/bin/cycript",
+        "/usr/lib/libcycript.dylib",
+        "/System/Library/LaunchDaemons/com.saurik.Cydia.Startup.plist",
+        "/System/Library/LaunchDaemons/com.ikey.bbot.plist",
+        "/Applications/FakeCarrier.app",
+        "/Library/MobileSubstrate/DynamicLibraries/Veency.plist",
+        "/Library/MobileSubstrate/DynamicLibraries/LiveClock.plist",
+        "/usr/libexec/ssh-keysign",
+        "/usr/libexec/sftp-server",
+        "/Applications/blackra1n.app",
+        "/Applications/IntelliScreen.app",
+        "/Applications/Snoop-itConfig.app",
+        "/var/lib/dpkg/info"
+    ]
+
+    // - fileExistsAtPath:isDirectory:
+    // - (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(nullable BOOL *)isDirectory;
+    const old_func = ObjC.classes.NSFileManager["- fileExistsAtPath:isDirectory:"]
+    const old_impl = old_func.implementation
+    old_func.implementation = ObjC.implement(old_func, function (clazz, selector, fileExistsAtPath, isDirectory) {
+        if (!fileExistsAtPath) return old_impl(clazz, selector, fileExistsAtPath, isDirectory)
+        const toCString: string = new ObjC.Object(fileExistsAtPath).toString()
+        const disp: string = `fileExistsAtPath:isDirectory: ( '${toCString}', ${isDirectory} )`
+        if (checksArray.includes(toCString)) {
+            loge(`${disp}`)
+            // fileExistsAtPath = ObjC.classes.NSString.stringWithString_("zzzz")
+            return 0
+        } else if (!SLOG) {
+            logd(`${disp}`)
+        }
+        return old_impl(clazz, selector, fileExistsAtPath, isDirectory)
+    })
+
+    // fopen
+    // FILE	*fopen(const char * __restrict __filename, const char * __restrict __mode)
+    Interceptor.attach(Module.findExportByName("libsystem_c.dylib", "fopen")!, {
+        onEnter(args) {
+            const fileName = args[0].readCString()
+            if (fileName != null) {
+                const disp = `fopen ( ${fileName} )`
+                if (checksArray.includes(fileName)) {
+                    loge(`${disp}`)
+                    args[0] = Memory.allocUtf8String("zzzz")
+                } else if (!SLOG) {
+                    logd(`${disp}`)
+                }
+            }
+        }
+    })
+}
+
+const hook_getenv = () => {
+    logd("hook getenv")
+
+    // getenv
+    // char	*getenv(const char *);
+    Interceptor.attach(Module.findExportByName("libsystem_c.dylib", "getenv")!, {
+        onEnter(args) {
+            this.envName = args[0].readCString()
+        },
+        onLeave(retval) {
+            const disp = `getenv ( ${this.envName} ) | ret: '${retval.readCString()}'`
+            if (this.envName != null && this.envName == "DYLD_INSERT_LIBRARIES") {
+                loge(`${disp}`)
+                retval.replace(NULL)
+            } else if (!SLOG) {
+                logd(`${disp}`)
+            }
+        }
+    })
+}
+
+const hook_ptrace = () => {
+    logd("hook ptrace")
+
+    // void mRiYXNnZnZmZGF2Ym() {
+    //     // No Need to encode these strings, because they will be directly compiled, they are not going to be present in the 'DATA' segment of the binary.
+    //     __asm (
+    //         "mov r0, #31\n" // set #define PT_DENY_ATTACH (31) to r0
+    //         "mov r1, #0\n"   // clear r1
+    //         "mov r2, #0\n"   // clear r2
+    //         "mov r3, #0\n"   // clear r3
+    //         "mov ip, #26\n"  // set the instruction pointer to syscal 26
+    //         "svc #0x80\n"    // SVC (formerly SWI) generates a supervisor call. Supervisor calls are normally used to request privileged operations or access to system resources from an operating system
+    //         );
+    // }
+
+    // ptrace(PT_DENY_ATTACH, 0, 0, 0);
+    // ↑ 还有可能是使用系统调用实现 这里不做处理 trace指令查看svc调用 不在这里实现 ↑
+
+    // int ptrace(int request, pid_t pid, caddr_t addr, int data);
+    // #define PT_DENY_ATTACH 31
+    const PT_DENY_ATTACH = 31
+    const addr = Module.findExportByName("libsystem_kernel.dylib", "ptrace")!
+    const srcCall = new NativeFunction(addr, "int", ["int", "int", "pointer", "int"])
+    Interceptor.replace(Module.findExportByName("libsystem_kernel.dylib", "ptrace")!, new NativeCallback((request, pid, addr, data) => {
+        loge(`called ptrace( ${request}, ${pid}, ${addr}, ${data} )`)
+        if (request == PT_DENY_ATTACH) return 0
+        return srcCall(request, pid, addr, data)
+    }, "int", ["int", "int", "pointer", "int"]))
+}
+
+const hook_NSClassFromString = () => {
+    logd("hook NSClassFromString")
+
+    // 从类名获取类 类似java的Class.forName
+    const checkArray = [
+        "HBPreferences", // 用于以越狱环境下从偏好设置读取配置项
+    ]
+
+    // FOUNDATION_EXPORT Class _Nullable NSClassFromString(NSString *aClassName);
+    Interceptor.attach(Module.findExportByName("Foundation", "NSClassFromString")!, {
+        onEnter(args) {
+            // Foundation -> -[NSString(NSStringOtherEncodings) UTF8String]
+            try {
+                // this.className = new ObjC.Object(args[0]).UTF8String()
+                this.className = new ObjC.Object(args[0]).toString()
+            } catch (error) {
+                this.className = ''
+            }
+        },
+        onLeave(retval) {
+            if (checkArray.includes(this.className)) {
+                loge(`${retval} <= NSClassFromString( '${this.className}' )`)
+            } else {
+                if (!SLOG) logd(`${retval} <= ${this.className}`)
+            }
+        }
+    })
+}
+
+
 declare global {
+    var hook_all_detect: () => void
     var hook_stat: () => void
     var hook_NSString_IsEqualToString: () => void
     var hook_isDebugged: () => void
+    var hook_get_image_name: () => void
+    var hook_canOpenURL: () => void
+    var hook_URLWithString: () => void
+    var hook_NSFileManager: () => void
+    var hook_getenv: () => void
+    var hook_ptrace: () => void
+    var hook_NSClassFromString: () => void
+}
+
+globalThis.hook_all_detect = () => {
+    hook_stat()
+    // hook_NSString_IsEqualToString()
+    // hook_isDebugged()
+    hook_get_image_name()
+    hook_canOpenURL()
+    hook_URLWithString()
+    hook_NSFileManager()
+    hook_getenv()
+    hook_ptrace()
+    hook_NSClassFromString()
 }
 
 globalThis.hook_stat = hook_stat
 globalThis.hook_NSString_IsEqualToString = hook_NSString_IsEqualToString
 globalThis.hook_isDebugged = hook_isDebugged
+globalThis.hook_get_image_name = hook_get_image_name
+globalThis.hook_canOpenURL = hook_canOpenURL
+globalThis.hook_URLWithString = hook_URLWithString
+globalThis.hook_NSFileManager = hook_NSFileManager
+globalThis.hook_getenv = hook_getenv
+globalThis.hook_ptrace = hook_ptrace
+globalThis.hook_NSClassFromString = hook_NSClassFromString
