@@ -177,7 +177,7 @@ const hook_isDebugged = () => {
         onEnter(args) {
             // junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
             // int sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
-            this.disp = `sysctl ( name=${args[0]}, namelen=${args[1]}, oldp=${args[2]}, oldlenp=${args[3]}, newp=${args[4]}, newlen${args[5]} )`
+            this.disp = `  ( name=${args[0]}, namelen=${args[1]}, oldp=${args[2]}, oldlenp=${args[3]}, newp=${args[4]}, newlen${args[5]} )`
             let tmp: string = ''
             for (let i = 0; i < args[1].toInt32(); i++) {  // int* ++
                 // if (i == 0) {
@@ -265,7 +265,7 @@ const hook_get_image_name = () => {
                 retval.replace(Memory.allocUtf8String(new_ret))
                 console.log('called from:\n' +
                     Thread.backtrace(this.context, Backtracer.ACCURATE)
-                    .map(DebugSymbol.fromAddress).join('\n') + '\n');
+                        .map(DebugSymbol.fromAddress).join('\n') + '\n')
                 return
             }
             if (!SLOG) logd(disp_str)
@@ -315,13 +315,11 @@ const hook_URLWithString = () => {
 const hook_NSFileManager = () => {
     logd("hook NSFileManager")
 
-    const checksArray = [
+    const isOpenJailFile = [
         "/Application/Cydia.app",
         "/Library/MobileSubstrate/MobileSubstrate.dylib",
         "/bin/bash",
-        "/usr/sbin/sshd",
         "/etc/apt",
-        "/usr/bin/ssh",
         "/private/var/lib/apt",
         "/private/var/lib/cydia",
         "/private/var/tmp/cydia.log",
@@ -342,6 +340,7 @@ const hook_NSFileManager = () => {
         "/usr/local/bin/cycript",
         "/usr/lib/libcycript.dylib",
         "/System/Library/LaunchDaemons/com.saurik.Cydia.Startup.plist",
+        "/System/Library/LaunchDaemons/com.saurik.Cy@dia.Startup.plist",
         "/System/Library/LaunchDaemons/com.ikey.bbot.plist",
         "/Applications/FakeCarrier.app",
         "/Library/MobileSubstrate/DynamicLibraries/Veency.plist",
@@ -351,7 +350,17 @@ const hook_NSFileManager = () => {
         "/Applications/blackra1n.app",
         "/Applications/IntelliScreen.app",
         "/Applications/Snoop-itConfig.app",
-        "/var/lib/dpkg/info"
+        "/var/lib/dpkg/info",
+        "/Applications/Icy.app",
+        "/Applications/MxTube.app",
+        "/Applications/RockApp.app",
+        "/bin/sh",
+        "/usr/bin/ssh",
+        "/usr/bin/sshd",
+        "/usr/sbin/sshd",
+        "/var/cache/apt",
+        "/var/log/syslog",
+        "/var/tmp/cydia.log",
     ]
 
     // - fileExistsAtPath:isDirectory:
@@ -362,7 +371,7 @@ const hook_NSFileManager = () => {
         if (!fileExistsAtPath) return old_impl(clazz, selector, fileExistsAtPath, isDirectory)
         const toCString: string = new ObjC.Object(fileExistsAtPath).toString()
         const disp: string = `fileExistsAtPath:isDirectory: ( '${toCString}', ${isDirectory} )`
-        if (checksArray.includes(toCString)) {
+        if (isOpenJailFile.includes(toCString)) {
             loge(`${disp}`)
             // fileExistsAtPath = ObjC.classes.NSString.stringWithString_("zzzz")
             return 0
@@ -379,7 +388,7 @@ const hook_NSFileManager = () => {
             const fileName = args[0].readCString()
             if (fileName != null) {
                 const disp = `fopen ( ${fileName} )`
-                if (checksArray.includes(fileName)) {
+                if (isOpenJailFile.includes(fileName)) {
                     loge(`${disp}`)
                     args[0] = Memory.allocUtf8String("zzzz")
                 } else if (!SLOG) {
@@ -508,3 +517,5 @@ globalThis.hook_NSFileManager = hook_NSFileManager
 globalThis.hook_getenv = hook_getenv
 globalThis.hook_ptrace = hook_ptrace
 globalThis.hook_NSClassFromString = hook_NSClassFromString
+
+hook_all_detect()
