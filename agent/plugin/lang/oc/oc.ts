@@ -70,7 +70,7 @@ globalThis.findMethods = (query: string, className?: string, accurate = false) =
     newLine()
 
     function ItorClassMethods(cls: ObjC.Object, query: string, accurate: boolean) {
-        const methods = cls.$ownMethods.filter((m) => accurate ? m == query : m.includes(query))
+        const methods = cls.$methods.filter((m) => accurate ? m == query : m.includes(query))
         if (methods.length != 0)
             logw(`\n[!] ${cls.handle} | ${methods.length} | ${cls.$className} \n`)
         methods

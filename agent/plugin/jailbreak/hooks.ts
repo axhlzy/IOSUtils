@@ -284,7 +284,7 @@ const hook_canOpenURL = () => {
             // [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"cydia://package/com.avl.com"]]
             const disp = `canOpenURL ( ${new ObjC.Object(clazz)}, ${ObjC.selectorAsString(selector)}, ${new ObjC.Object(URLString)} )` as string
             let retval = old_impl(clazz, selector, URLString) as number
-            if (disp.includes("cydia")) {
+            if (disp.includes("cydia") || disp.includes("Cydia")) {
                 loge(`${retval} <= ${disp}`)
                 retval = 0
             } else {
@@ -443,7 +443,8 @@ const hook_ptrace = () => {
     const PT_DENY_ATTACH = 31
     const addr = Module.findExportByName("libsystem_kernel.dylib", "ptrace")!
     const srcCall = new NativeFunction(addr, "int", ["int", "int", "pointer", "int"])
-    Interceptor.replace(Module.findExportByName("libsystem_kernel.dylib", "ptrace")!, new NativeCallback((request, pid, addr, data) => {
+    Interceptor.revert(addr)
+    Interceptor.replace(addr, new NativeCallback((request, pid, addr, data) => {
         loge(`called ptrace( ${request}, ${pid}, ${addr}, ${data} )`)
         if (request == PT_DENY_ATTACH) return 0
         return srcCall(request, pid, addr, data)
@@ -472,8 +473,9 @@ const hook_NSClassFromString = () => {
         onLeave(retval) {
             if (checkArray.includes(this.className)) {
                 loge(`${retval} <= NSClassFromString( '${this.className}' )`)
+                retval.replace(NULL)
             } else {
-                if (!SLOG) logd(`${retval} <= ${this.className}`)
+                if (!SLOG) logw(`${retval} <= ${this.className}`)
             }
         }
     })
@@ -518,4 +520,4 @@ globalThis.hook_getenv = hook_getenv
 globalThis.hook_ptrace = hook_ptrace
 globalThis.hook_NSClassFromString = hook_NSClassFromString
 
-hook_all_detect()
+// hook_all_detect()
