@@ -119,7 +119,7 @@ const showSuperClasses = (ptr: NativePointer | number | string) => {
     } catch (error) {
         // ...
     }
-    logd(`\n${disp.substring(0, disp.length - 4)}\n`)
+    logd(`\n${disp}\n`)
 }
 
 const showButtonActions = (ptr: NativePointer | number | string) => {

@@ -1,3 +1,7 @@
+import { NSUTF8StringEncoding } from './constants.js'
+import { NSString } from './types.js'
+import './types.js'
+
 export { }
 
 globalThis.clear = () => console.log('\x1Bc')
@@ -9,6 +13,10 @@ globalThis.hex = (ptr: NativePointer | string | number, len: number = 0x40) => {
     else if (ptr instanceof NativePointer) mPtr = ptr
     if (mPtr.isNull()) throw new Error('ptr is null')
     console.log(hexdump(mPtr, { length: len, header: true, ansi: true }))
+}
+
+globalThis.dumpUI = () => {
+    logd(ObjC.classes.UIWindow.keyWindow().recursiveDescription().toString())
 }
 
 globalThis.findSym = (filterName: string, exact: boolean = false, onlyFunction: boolean = false) => {
@@ -106,6 +114,52 @@ globalThis.call = (ptr: NativePointer, ...args) => {
     }
 }
 
+const bytesToUTF8 = (data: any): string => {
+    // Sample Objective-C
+    // char buf[] = "\x41\x42\x43\x44";
+    // NSString *p = [[NSString alloc] initWithBytes:buf length:5 encoding:NSUTF8StringEncoding];
+    if (data === null) {
+        return ""
+    }
+    if (!data.hasOwnProperty("bytes")) {
+        return data.toString()
+    }
+    const s: NSString = ObjC.classes.NSString.alloc().initWithBytes_length_encoding_(
+        data.bytes(), data.length(), NSUTF8StringEncoding);
+    if (s) {
+        return s.UTF8String()
+    }
+    return ""
+};
+
+globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) => {
+    const mPtr = checkPointer(ptr)
+    const obj = new ObjC.Object(mPtr)
+    if (obj.$kind != "instance") throw new Error("ivars | can only parse instance")
+    showSuperClasses(obj.handle)
+    const $clonedIvars: { [name: string]: any } = {}
+    const vars = obj.$ivars
+    let index: number = 0
+    for (const k in vars) {
+        if (vars.hasOwnProperty(k)) {
+            const v = vars[k]
+            $clonedIvars[k] = bytesToUTF8(v)
+            if (ret) continue
+            if (v instanceof ObjC.Object) {
+                logd(`[${++index}] ${k}: | ObjC.Object`)
+                logz(`\t${v.handle}`)
+            } else if (typeof v == "object") {
+                logd(`[${++index}] ${k}: | ${typeof v}`)
+                logz(`\t${v}`)
+            } else {
+                logd(`[${++index}] ${k}: | ${typeof v}`)
+                logz(`\t${$clonedIvars[k]}`)
+            }
+        }
+    }
+    if (ret) return $clonedIvars
+}
+
 declare global {
     var ProcessDispTask: any
     var clear: () => void
@@ -114,4 +168,6 @@ declare global {
     var checkPointer: (ptr: NativePointer | number | string | ObjC.Object, throwErr?: boolean) => NativePointer
     var allocOCString: (str: string) => ObjC.Object
     var call: (ptr: NativePointer, args: any[]) => void
+    var dumpUI: () => void
+    var lfs: (ptr: NativePointer | string | number) => void
 }
