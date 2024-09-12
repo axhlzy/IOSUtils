@@ -90,37 +90,6 @@ class UIControlTargetAction {
     }
 }
 
-globalThis.getSuperClasses = (ptr: NativePointer | number | string | ObjC.Object): Array<ObjC.Object> => {
-    const obj = new ObjC.Object(checkPointer(ptr))
-    let cls_itor = obj.$class
-    let arr = [cls_itor]
-    while (true) {
-        try {
-            if (cls_itor.isNull() || cls_itor.handle.isNull()) break
-            cls_itor = cls_itor.$superClass
-            if (cls_itor != null) arr.push(cls_itor)
-        } catch (error) {
-            break
-        }
-    }
-    return arr
-}
-
-const showSuperClasses = (ptr: NativePointer | number | string | ObjC.Object) => {
-    const arr = getSuperClasses(checkPointer(ptr))
-    let disp: string = ''
-    try {
-        for (let i = 0; i < arr.length; i++) {
-            disp += arr[i].$className
-            disp += ` ( ${arr[i].$class.handle} ) `
-            if (i < arr.length - 1) disp += ' -> '
-        }
-    } catch (error) {
-        // ...
-    }
-    logd(`\n${disp}\n`)
-}
-
 const showButtonActions = (ptr: NativePointer | number | string) => {
     const mPtr = checkPointer(ptr)
     const obj = new ObjC.Object(mPtr)
@@ -138,10 +107,6 @@ const showButtonActions = (ptr: NativePointer | number | string) => {
 
 declare global {
     var showButtonActions: (ptr: NativePointer | number | string) => void
-    var showSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
-    var getSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => Array<ObjC.Object>
 }
 
 globalThis.showButtonActions = showButtonActions
-globalThis.showSuperClasses = showSuperClasses
-globalThis.getSuperClasses = getSuperClasses

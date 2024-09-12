@@ -115,6 +115,55 @@ globalThis.findClasses = (query: string, accurate: boolean = false) => {
     newLine()
 }
 
+
+globalThis.getSuperClasses = (ptr: NativePointer | number | string | ObjC.Object): Array<ObjC.Object> => {
+    const obj = new ObjC.Object(checkPointer(ptr))
+    let cls_itor = obj.$class
+    let arr = [cls_itor]
+    while (true) {
+        try {
+            if (cls_itor.isNull() || cls_itor.handle.isNull()) break
+            cls_itor = cls_itor.$superClass
+            if (cls_itor != null) arr.push(cls_itor)
+        } catch (error) {
+            break
+        }
+    }
+    return arr
+}
+
+const showSuperClasses = (ptr: NativePointer | number | string | ObjC.Object) => {
+    const arr = getSuperClasses(checkPointer(ptr))
+    let disp: string = ''
+    try {
+        for (let i = 0; i < arr.length; i++) {
+            disp += arr[i].$className
+            disp += ` ( ${arr[i].$class.handle} ) `
+            if (i < arr.length - 1) disp += ' -> '
+        }
+    } catch (error) {
+        // ...
+    }
+    logd(`\n${disp}\n`)
+}
+
+const showSubClasses = (ptr: NativePointer | number | string | ObjC.Object) => {
+    const cur = new ObjC.Object(checkPointer(ptr))
+    logw(`\nDisplay sub classes of ${cur.$className} @ ${cur.$class.handle} \n`)
+    getCachedClasses()
+        .filter(item => {
+            const sup = item.$superClass
+            if (sup == undefined || sup == null) return false
+            if (sup.$className == cur.$className) return true
+            return false
+        })
+        .sort((a, b) => a.$className.localeCompare(b.$className))
+        .forEach((item, index) => {
+            const disp = `[ ${index} ]\t${item.$class.handle} -> ${item.$className}`
+            item.$className.startsWith('_') ? logz(disp) : logd(disp)
+        })
+}
+
 globalThis.m = globalThis.showMethods
 
 declare global {
@@ -125,4 +174,15 @@ declare global {
     var findClasses: (query: string) => void
 
     var cacheAllClass: ObjC.Object[]
-} 
+
+    var showSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
+    var getSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => Array<ObjC.Object>
+
+    var showSubClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
+}
+
+
+globalThis.showSuperClasses = showSuperClasses
+globalThis.getSuperClasses = getSuperClasses
+
+globalThis.showSubClasses = showSubClasses
