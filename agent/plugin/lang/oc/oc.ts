@@ -10,6 +10,7 @@ const getCachedClasses = () => {
     return cacheAllClass
 }
 
+// findMethodsByResolver("-[* *Jail*]")
 // findMethodsByResolver("-[NSString *stringWith*]")
 globalThis.findMethodsByResolver = (query: string) => {
     if (query == null)
@@ -154,14 +155,14 @@ const showSubClasses = (ptr: NativePointer | number | string | ObjC.Object) => {
         .filter(item => {
             const sup = item.$superClass
             if (sup == undefined || sup == null) return false
-            if (sup.$className == cur.$className) return true
-            return false
+            return sup.equals(cur.$class)
         })
         .sort((a, b) => a.$className.localeCompare(b.$className))
         .forEach((item, index) => {
             const disp = `[ ${index} ]\t${item.$class.handle} -> ${item.$className}`
             item.$className.startsWith('_') ? logz(disp) : logd(disp)
         })
+    newLine()
 }
 
 globalThis.m = globalThis.showMethods

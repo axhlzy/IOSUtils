@@ -2,34 +2,6 @@ import { NSUTF8StringEncoding } from './constants.js'
 import { NSString } from './types.js'
 import './types.js'
 
-export { }
-
-globalThis.clear = () => console.log('\x1Bc')
-
-globalThis.hex = (ptr: NativePointer | string | number, len: number = 0x40) => {
-    let mPtr = NULL
-    if (typeof ptr == 'string' && ptr.startsWith("0x")) mPtr = new NativePointer(ptr)
-    else if (typeof ptr == 'number') mPtr = new NativePointer(ptr)
-    else if (ptr instanceof NativePointer) mPtr = ptr
-    if (mPtr.isNull()) throw new Error('ptr is null')
-    console.log(hexdump(mPtr, { length: len, header: true, ansi: true }))
-}
-
-globalThis.dumpUI = () => {
-    logd(ObjC.classes.UIWindow.keyWindow().recursiveDescription().toString())
-}
-
-globalThis.findSym = (filterName: string, exact: boolean = false, onlyFunction: boolean = false) => {
-    Process.enumerateModules()
-        .forEach(module => {
-            module.enumerateSymbols()
-                .filter(symbol => exact ? symbol.name == filterName : symbol.name.includes(filterName))
-                .filter(symbol => onlyFunction ? symbol.type == 'function' : true)
-                .filter(symbol => !symbol.address.isNull())
-                .forEach(symbol => logd(`${symbol.address} <= ${symbol.name}`))
-        })
-}
-
 // ... 单线程的js 这样只会显示最后的结果 ...
 // 后续改改创建线程来轮询
 export class ProcessDispTask {
@@ -73,6 +45,32 @@ export class ProcessDispTask {
 }
 
 globalThis.ProcessDispTask = ProcessDispTask
+
+globalThis.clear = () => console.log('\x1Bc')
+
+globalThis.hex = (ptr: NativePointer | string | number, len: number = 0x40) => {
+    let mPtr = NULL
+    if (typeof ptr == 'string' && ptr.startsWith("0x")) mPtr = new NativePointer(ptr)
+    else if (typeof ptr == 'number') mPtr = new NativePointer(ptr)
+    else if (ptr instanceof NativePointer) mPtr = ptr
+    if (mPtr.isNull()) throw new Error('ptr is null')
+    console.log(hexdump(mPtr, { length: len, header: true, ansi: true }))
+}
+
+globalThis.dumpUI = () => {
+    logd(ObjC.classes.UIWindow.keyWindow().recursiveDescription().toString())
+}
+
+globalThis.findSym = (filterName: string, exact: boolean = false, onlyFunction: boolean = false) => {
+    Process.enumerateModules()
+        .forEach(module => {
+            module.enumerateSymbols()
+                .filter(symbol => exact ? symbol.name == filterName : symbol.name.includes(filterName))
+                .filter(symbol => onlyFunction ? symbol.type == 'function' : true)
+                .filter(symbol => !symbol.address.isNull())
+                .forEach(symbol => logd(`${symbol.address} <= ${symbol.name}`))
+        })
+}
 
 globalThis.checkPointer = (ptr: NativePointer | number | string | ObjC.Object, throwErr: boolean = true): NativePointer => {
     let mPtr: NativePointer = NULL
@@ -118,7 +116,7 @@ globalThis.allocOCString = (str: string): ObjC.Object => {
     
     call(0x1ba5328d8, 0x102e07840, ObjC.selector("- setText:"), allocOCString("123123123"))
  */
-globalThis.call = (ptr: NativePointer, ...args):NativePointer => {
+globalThis.call = (ptr: NativePointer, ...args): NativePointer => {
     try {
         // logd(`Number of arguments: ${args.length}`)
         // logd(`Arguments: ${args}`)
@@ -200,9 +198,121 @@ globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) =>
     if (ret) return $clonedIvars
 }
 
+enum passValueKey {
+    org = "org",
+    src = "src",
+    enter = "enter",
+    leave = "leave",
+    time = "time"
+}
+export type ARGM = NativePointer | number | any
+export type PassType = passValueKey | string
+var map_attach_listener = new Map<string, InvocationListener>()
+export type OnEnterType = (args: InvocationArguments, ctx: CpuContext, passValue: Map<PassType, any>) => void
+export type OnExitType = (retval: InvocationReturnValue, ctx: CpuContext, passValue: Map<PassType, any>) => void
+const attachNative = (mPtr: ARGM, mOnEnter?: OnEnterType, mOnLeave?: OnExitType, needRecord: boolean = true): void => {
+    if (typeof mPtr == "number") mPtr = ptr(mPtr)
+    if (mPtr instanceof NativePointer && mPtr.isNull()) return
+    var passValue = new Map()
+    passValue.set(passValueKey.org, mPtr)
+    passValue.set(passValueKey.src, mPtr)
+    passValue.set(passValueKey.enter, mOnEnter)
+    passValue.set(passValueKey.leave, mOnLeave)
+    passValue.set(passValueKey.time, new Date())
+    mPtr = checkPointer(mPtr)
+    let Listener = Interceptor.attach(mPtr, {
+        onEnter: function (args: InvocationArguments) {
+            if (mOnEnter != undefined) mOnEnter(args, this.context, passValue)
+        },
+        onLeave: function (retval: InvocationReturnValue) {
+            if (mOnLeave != undefined) mOnLeave(retval, this.context, passValue)
+        }
+    })
+    if (needRecord) map_attach_listener.set(String(mPtr), Listener)
+}
+
+const detachAll = (mPtr?: ARGM) => {
+    if (typeof mPtr == "number") mPtr = ptr(mPtr)
+    if (mPtr == undefined) {
+        map_attach_listener.clear()
+        Interceptor.detachAll()
+    } else {
+        let key = String(checkPointer(mPtr))
+        let listener = map_attach_listener.get(key)
+        if (listener != undefined) {
+            listener.detach()
+            map_attach_listener.delete(key)
+        }
+    }
+}
+
+var arr_nop_addr = new Array()
+type ReplaceFunc = NativeFunction<NativePointer, [NativePointerValue, NativePointerValue, NativePointerValue, NativePointerValue]>
+type ReplaceFuncType = (srcCall: ReplaceFunc, arg0: NativePointer, arg1: NativePointer, arg2: NativePointer, arg3: NativePointer) => any
+function replaceFunction(mPtr: ARGM, callBack: ReplaceFuncType, TYPENOP: boolean = true): void {
+    mPtr = checkPointer(mPtr)
+    if (String(arr_nop_addr).indexOf(String(mPtr)) == -1) {
+        arr_nop_addr.push(String(mPtr))
+    } else {
+        Interceptor.revert(mPtr)
+    }
+    const srcFunc = new NativeFunction(mPtr, 'pointer', ['pointer', 'pointer', 'pointer', 'pointer'])
+    Interceptor.replace(mPtr, new NativeCallback((arg0, arg1, arg2, arg3) => {
+        logw("\nCalled " + (TYPENOP ? "Replaced" : "Nop") + " function ---> " + mPtr)
+        const ret = callBack(srcFunc, arg0, arg1, arg2, arg3)
+        return ret == null ? ptr(0) : ret
+    }, 'pointer', ['pointer', 'pointer', 'pointer', 'pointer']))
+}
+
+const nopFunction = (mPtr: ARGM): void => {
+    if (typeof mPtr == "number") mPtr = ptr(mPtr)
+    if (mPtr == undefined) return
+    replaceFunction(mPtr, () => ptr(0), true)
+}
+
+const cancelNop = (mPtr: ARGM): void => {
+    mPtr = checkPointer(mPtr)
+    Interceptor.revert(mPtr)
+    for (let i = 0; i < arr_nop_addr.length; i++) {
+        if (String(arr_nop_addr[i]) == String(mPtr)) {
+            arr_nop_addr = arr_nop_addr.splice(arr_nop_addr[i], 1)
+        }
+    }
+}
+
+const cancelAllNopedFunction = () => arr_nop_addr.forEach((addr) => Interceptor.revert(addr))
+
+const stk = (mPtr: NativePointer) => {
+    Interceptor.attach(checkPointer(mPtr), {
+        onEnter: function (args) {
+            logw(`ENTER: ${mPtr}\n\tINS=${new ObjC.Object(args[0])} SEL=${ObjC.selectorAsString(args[1])}`)
+            logw(`\tARG2=${new ObjC.Object(args[2])} ARG3=${new ObjC.Object(args[3])} ... `)
+
+            Stalker.follow(Process.getCurrentThreadId(), {
+                events: {
+                    compile: true
+                },
+                onReceive: function (events) {
+                    const bbs = Stalker.parse(events, {
+                        stringify: false,
+                        annotate: false
+                    });
+                    logd("↓ Stalker trace ↓\n")
+                    logd(bbs.flat().map(item => DebugSymbol.fromAddress(ptr(item as unknown as string))).join('\n'));
+                }
+            })
+        },
+        onLeave: function (retval) {
+            Stalker.unfollow()
+            Stalker.flush()
+        }
+    })
+}
+
 declare global {
     var ProcessDispTask: any
     var clear: () => void
+    var cls: () => void // alias for clear
     var findSym: (filterName: string, exact?: boolean, onlyFunction?: boolean) => void
     var hex: (ptr: NativePointer | string | number, len?: number) => void
     var checkPointer: (ptr: NativePointer | number | string | ObjC.Object, throwErr?: boolean) => NativePointer
@@ -212,4 +322,23 @@ declare global {
     var callOcOnMain: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any) => void
     var lfs: (ptr: NativePointer | string | number) => void
     var dumpUI: () => void
+
+    var A: (mPtr: ARGM, mOnEnter?: OnEnterType, mOnLeave?: OnExitType, needRecord?: boolean) => void
+    var d: (mPtr?: ARGM) => void
+    var n: (mPtr: ARGM) => void
+    var nn: (mPtr: ARGM) => void
+    var nnn: () => void
+    var D: () => void
+
+    var stk: (mPtr: NativePointer) => void
 }
+
+
+globalThis.d = detachAll
+globalThis.A = attachNative
+globalThis.n = nopFunction
+globalThis.nn = cancelNop
+globalThis.nnn = cancelAllNopedFunction
+globalThis.D = () => { d(); nnn() }
+
+globalThis.stk = stk
