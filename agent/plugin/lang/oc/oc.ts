@@ -5,7 +5,7 @@ var cacheAllClass: ObjC.Object[] = []
 globalThis.cacheAllClass = cacheAllClass
 
 const getCachedClasses = () => {
-    if (cacheAllClass.length === 0) 
+    if (cacheAllClass.length === 0)
         cacheAllClass = Object.values(ObjC.classes) as ObjC.Object[]
     return cacheAllClass
 }
@@ -14,46 +14,45 @@ const getCachedClasses = () => {
 globalThis.findMethodsByResolver = (query: string) => {
     if (query == null)
         throw new Error("query cannot be null")
-
     let count: number = 0
     new ApiResolver("objc")
         .enumerateMatches(query)
-        .forEach((m: ApiResolverMatch) => {
-            logd(`[ ${count++} ]\t${m.address}\t${m.name}`)
-        })
+        .forEach((m: ApiResolverMatch) => logd(`[ ${count++} ]\t${m.address}\t${m.name}`))
+}
+
+const getClassFromMethodName = (name: string, filterClass: Array<ObjC.Object>): ObjC.Object | undefined => {
+    let cls: ObjC.Object
+    for (let i = 0; i < filterClass.length; i++) {
+        cls = filterClass[i]
+        if (cls[name]) return cls
+    }
 }
 
 globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter: string = '', includeParent: boolean = false) => {
-    if (clsNameOrPtr == null)
-        throw new Error("classNameOrPtr cannot be null")
+    const obj = new ObjC.Object(checkPointer(clsNameOrPtr))
+    logw(`\n[ ${obj.$className} ] ${obj.handle} <- cls:${obj.$class.handle}`)
 
-    let localPtr: NativePointer = NULL
-    if (typeof clsNameOrPtr == "string" && clsNameOrPtr.startsWith("0x"))
-        localPtr = ptr(clsNameOrPtr)
-    else if (typeof clsNameOrPtr == "number")
-        localPtr = ptr(clsNameOrPtr)
-    else if (typeof clsNameOrPtr == "string")
-        localPtr = ObjC.classes[clsNameOrPtr].$class.handle
-    else if (clsNameOrPtr instanceof NativePointer)
-        localPtr = clsNameOrPtr
+    showSuperClasses(obj)
 
-    if (localPtr == NULL)
-        throw new Error("classNameOrPtr is not a valid pointer")
+    // const supClasses = getSuperClasses(obj)
 
-    newLine()
-    let obj = new ObjC.Object(localPtr)
-    logw(`[ ${obj.$className} ] ${obj.$class.handle}`)
-
-    includeParent ? obj.$methods : obj.$ownMethods
-        .filter(m => m.includes(filter))
-        .map((m, i) => {
-            try {
-                return `[ ${i} ]\t M: ${ObjC.classes[obj.$className][m].implementation} ${m}`
-            } catch (error) {
-                return `[ ${i} ]\t C: ${ObjC.classes[obj.$className].handle} ${m}`
-            }
-        })
-        .forEach(logd)
+    {
+        (() => { return includeParent ? obj.$methods : obj.$ownMethods })()
+            .filter(m => filter.length == 0 ? true : m.includes(filter))
+            .sort((i1, i2) => i2.localeCompare(i1))
+            .map((m, i) => {
+                try {
+                    // const extra = "C: " + (includeParent ? `${getClassFromMethodName(m, supClasses)?.$class.handle}` : '')
+                    const extra = ''
+                    // instance can parse method address
+                    return `[ ${i} ]\t${extra} M: ${obj.$class[m].implementation} | ${m}`
+                } catch (error) {
+                    // only method names
+                    return `[ ${i} ]\t C: ${obj.$class.handle} | ${m}`
+                }
+            })
+            .forEach(item => item.includes('_') ? logz(item) : logd(item))
+    }
     newLine()
 }
 
@@ -119,13 +118,11 @@ globalThis.findClasses = (query: string, accurate: boolean = false) => {
 globalThis.m = globalThis.showMethods
 
 declare global {
-    var showMethods: (clsNameOrPtr: number | string | NativePointer) => void
+    var showMethods: (clsNameOrPtr: number | string | NativePointer, filter?: string, includeParent?: boolean) => void
+    var m: (clsNameOrPtr: number | string | NativePointer, filter?: string, includeParent?: boolean) => void // alias for showMethods
     var findMethods: (query: string, className?: string, accurate?: boolean) => void
     var findMethodsByResolver: (query: string) => void
     var findClasses: (query: string) => void
 
     var cacheAllClass: ObjC.Object[]
-
-    // alies
-    var m: typeof showMethods
 } 

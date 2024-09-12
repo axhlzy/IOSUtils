@@ -80,6 +80,7 @@ globalThis.checkPointer = (ptr: NativePointer | number | string | ObjC.Object, t
         if (ptr.startsWith('0x')) mPtr = new NativePointer(parseInt(ptr, 16))
         else {
             mPtr = DebugSymbol.fromName(ptr).address
+            if (mPtr.isNull()) mPtr = ObjC.classes[ptr].handle
             if (mPtr.isNull()) throw new Error(`Invalid pointer <- cannot find ${ptr}`)
         }
     } else if (typeof ptr === 'number') {
@@ -98,9 +99,26 @@ globalThis.allocOCString = (str: string): ObjC.Object => {
     return ObjC.classes["NSString"]["+ stringWithUTF8String:"](Memory.allocUtf8String(str))
 }
 
-// new ObjC.selector("xxx") === call("NSSelectorFromString", allocOCString("xxx"))
-
-globalThis.call = (ptr: NativePointer, ...args) => {
+/**
+ * 
+ * @param ptr function address | asm start address
+ * @param args arguments list | if call oc function, instance as first arg, use ObjC.selector or NSSelectorFromString as the secend arg
+ * @returns function return value | NativePointer
+ * @example
+ * 
+ * new ObjC.selector("xxx") === call("NSSelectorFromString", allocOCString("xxx"))
+ * 
+ * [ UILabel ] 0x102e07840
+    UILabel ( 0x20310ec40 )  -> UIView ( 0x20310f668 )  -> UIResponder ( 0x203108f98 )  -> NSObject ( 0x2030ca1f0 )
+    [ 0 ]    M: 0x1ba532e80 | - setTextColor:
+    [ 1 ]    M: 0x1ba53393c | - setTextAlignment:
+    [ 2 ]    M: 0x1ba5328d8 | - setText:
+    [ 3 ]    M: 0x1ba533a40 | - setHighlightedTextColor:
+    [ 4 ]    M: 0x1ba53ba58 | - setAutotrackTextToFit:
+    
+    call(0x1ba5328d8, 0x102e07840, ObjC.selector("- setText:"), allocOCString("123123123"))
+ */
+globalThis.call = (ptr: NativePointer, ...args):NativePointer => {
     try {
         // logd(`Number of arguments: ${args.length}`)
         // logd(`Arguments: ${args}`)
@@ -111,7 +129,29 @@ globalThis.call = (ptr: NativePointer, ...args) => {
     } catch (error) {
         loge(`Error during call: \n\t${error}`)
         // throw error
+        return NULL
     }
+}
+
+globalThis.callOC = (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args): NativePointer => {
+    return new ObjC.Object(checkPointer(objPtr))[funcName](...args)
+    // return call(ptr(new ObjC.Object(checkPointer(objPtr))[funcName].implementation), objPtr, ObjC.selector(funcName), ...args)
+}
+
+/**
+ * OC call on main thread
+ * 
+ * @param objPtr 
+ * @param funcName 
+ * @param args 
+ * 
+ * example : callOcOnMain(0x102e07840, "- setText:", allocOCString("test"))
+ */
+globalThis.callOcOnMain = (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any): void => {
+    ObjC.schedule(ObjC.mainQueue, () => {
+        const ret = callOC(objPtr, funcName, ...args)
+        if (ret != undefined) logd(`${ret}`)
+    })
 }
 
 const bytesToUTF8 = (data: any): string => {
@@ -142,11 +182,11 @@ globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) =>
     let index: number = 0
     for (const k in vars) {
         if (vars.hasOwnProperty(k)) {
-            const v = vars[k]
+            const v = vars[k] as Object
             $clonedIvars[k] = bytesToUTF8(v)
             if (ret) continue
             if (v instanceof ObjC.Object) {
-                logd(`[${++index}] ${k}: | ObjC.Object`)
+                logd(`[${++index}] ${k}: | ObjC.Object <- ${v.$kind} of ${v.$className} @ ${v.$class.handle}`)
                 logz(`\t${v.handle}`)
             } else if (typeof v == "object") {
                 logd(`[${++index}] ${k}: | ${typeof v}`)
@@ -168,6 +208,8 @@ declare global {
     var checkPointer: (ptr: NativePointer | number | string | ObjC.Object, throwErr?: boolean) => NativePointer
     var allocOCString: (str: string) => ObjC.Object
     var call: (ptr: NativePointer, args: any[]) => void
-    var dumpUI: () => void
+    var callOC: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any) => NativePointer
+    var callOcOnMain: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any) => void
     var lfs: (ptr: NativePointer | string | number) => void
+    var dumpUI: () => void
 }
