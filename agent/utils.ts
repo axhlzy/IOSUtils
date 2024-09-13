@@ -75,6 +75,7 @@ globalThis.findSym = (filterName: string, exact: boolean = false, onlyFunction: 
 globalThis.checkPointer = (ptr: NativePointer | number | string | ObjC.Object, throwErr: boolean = true): NativePointer => {
     let mPtr: NativePointer = NULL
     if (typeof ptr === 'string') {
+        ptr = ptr.trim()
         if (ptr.startsWith('0x')) mPtr = new NativePointer(parseInt(ptr, 16))
         else {
             mPtr = DebugSymbol.fromName(ptr).address
@@ -116,7 +117,7 @@ globalThis.allocOCString = (str: string): ObjC.Object => {
     
     call(0x1ba5328d8, 0x102e07840, ObjC.selector("- setText:"), allocOCString("123123123"))
  */
-globalThis.call = (ptr: NativePointer, ...args): NativePointer => {
+globalThis.call = (ptr: NativePointer | number | string | ObjC.Object, ...args: any[] | NativePointer[] | ObjC.Object[]): NativePointer => {
     try {
         // logd(`Number of arguments: ${args.length}`)
         // logd(`Arguments: ${args}`)
@@ -317,9 +318,9 @@ declare global {
     var hex: (ptr: NativePointer | string | number, len?: number) => void
     var checkPointer: (ptr: NativePointer | number | string | ObjC.Object, throwErr?: boolean) => NativePointer
     var allocOCString: (str: string) => ObjC.Object
-    var call: (ptr: NativePointer, args: any[]) => void
-    var callOC: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any) => NativePointer
-    var callOcOnMain: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any) => void
+    var call: (ptr: NativePointer | number | string | ObjC.Object, ...args: any | NativePointer | ObjC.Object) => NativePointer
+    var callOC: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => NativePointer
+    var callOcOnMain: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => void
     var lfs: (ptr: NativePointer | string | number) => void
     var dumpUI: () => void
 

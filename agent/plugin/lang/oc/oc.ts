@@ -43,16 +43,28 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
             .sort((i1, i2) => i2.localeCompare(i1))
             .map((m, i) => {
                 try {
+                    // !todo 在 includeParent 启用的时候 分组展示类方法
                     // const extra = "C: " + (includeParent ? `${getClassFromMethodName(m, supClasses)?.$class.handle}` : '')
                     const extra = ''
-                    // instance can parse method address
-                    return `[ ${i} ]\t${extra} M: ${obj.$class[m].implementation} | ${m}`
+                    // class methods
+                    const method = obj.$class[m]
+                    const impl = method.implementation
+                    const md = Process.findModuleByAddress(impl)
+                    const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                    return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} -> ${rva} | ${m}`
                 } catch (error) {
-                    // only method names
-                    return `[ ${i} ]\t C: ${obj.$class.handle} | ${m}`
+                    // instance methods
+                    const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
+                    const method = call("class_getInstanceMethod", obj, selector)
+                    const impl = call("method_getImplementation", method)
+                    const md = Process.findModuleByAddress(impl)
+                    const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                    return `[ ${i} ]\t M: ${method} -> ${impl} -> ${rva} | ${m}`
+
+                    // 
                 }
             })
-            .forEach(item => item.includes('_') ? logz(item) : logd(item))
+            .forEach(item => item.includes(' _') ? logz(item) : logd(item))
     }
     newLine()
 }
