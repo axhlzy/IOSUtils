@@ -102,13 +102,18 @@ const hook_UIAlertController = ()=>{
     Interceptor.attach(ObjC.classes["UIAlertAction"]["+ actionWithTitle:style:handler:"].implementation, {
         onEnter(args) {
             const title = new ObjC.Object(args[2])
-            logd(`\nCalled UIAlertAction actionWithTitle:'${title}' style:'${args[3]}' handler:'${new ObjC.Object(args[4])}'`)
+            // !todo parse Block
+            logd(`\nCalled UIAlertAction actionWithTitle:'${title}' style:'${args[3]}' handler:'${new ObjC.Block(args[4])}'`)
         }
     })
 
-    var s = new ObjC.Block(new NativeCallback(()=>{
-        logd("123")
-    }, "void",["void"]))
+    // var newReplyBlock = new ObjC.Block({
+    //     retType: 'void',
+    //     argTypes: ['int', 'pointer'],
+    //     implementation: function (successOrFailure, nsError) {
+    //         console.log("Success: "+successOrFailure)
+    //     }
+    // });
 }
 
 declare global {
