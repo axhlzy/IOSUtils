@@ -45,7 +45,7 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                 try {
                     // !todo 在 includeParent 启用的时候 分组展示类方法
                     // const extra = "C: " + (includeParent ? `${getClassFromMethodName(m, supClasses)?.$class.handle}` : '')
-                    const extra = ''
+                    const _extra = ''
                     // class methods
                     const method = obj.$class[m]
                     const impl = method.implementation
@@ -60,8 +60,6 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                     const md = Process.findModuleByAddress(impl)
                     const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
                     return `[ ${i} ]\t M: ${method} -> ${impl} -> ${rva} | ${m}`
-
-                    // 
                 }
             })
             .forEach(item => item.includes(' _') ? logz(item) : logd(item))
@@ -86,11 +84,22 @@ globalThis.findMethods = (query: string, className?: string, accurate = false) =
         if (methods.length != 0)
             logw(`\n[!] ${cls.handle} | ${methods.length} | ${cls.$className} \n`)
         methods
-            .map(m => {
+            .map((m, i) => {
                 try {
-                    return `M: ${cls[m].implementation} ${m}`
+                    // class methods
+                    const method = cls.$class[m]
+                    const impl = method.implementation // throw error while type of class is instance
+                    const md = Process.findModuleByAddress(impl)
+                    const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                    return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} -> ${rva} | ${m}`
                 } catch (error) {
-                    return `C: ${cls.handle} ${m}`
+                    // instance methods
+                    const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
+                    const method = call("class_getInstanceMethod", cls, selector)
+                    const impl = call("method_getImplementation", method)
+                    const md = Process.findModuleByAddress(impl)
+                    const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                    return `[ ${i} ]\t M: ${method} -> ${impl} -> ${rva} | ${m}`
                 }
             })
             .sort((a, b) => b[0].localeCompare(a[0]))
@@ -127,7 +136,6 @@ globalThis.findClasses = (query: string, accurate: boolean = false) => {
 
     newLine()
 }
-
 
 globalThis.getSuperClasses = (ptr: NativePointer | number | string | ObjC.Object): Array<ObjC.Object> => {
     const obj = new ObjC.Object(checkPointer(ptr))
@@ -180,22 +188,19 @@ const showSubClasses = (ptr: NativePointer | number | string | ObjC.Object) => {
 globalThis.m = globalThis.showMethods
 
 declare global {
+    var cacheAllClass: ObjC.Object[]
     var showMethods: (clsNameOrPtr: number | string | NativePointer, filter?: string, includeParent?: boolean) => void
     var m: (clsNameOrPtr: number | string | NativePointer, filter?: string, includeParent?: boolean) => void // alias for showMethods
     var findMethods: (query: string, className?: string, accurate?: boolean) => void
     var findMethodsByResolver: (query: string) => void
     var findClasses: (query: string) => void
 
-    var cacheAllClass: ObjC.Object[]
-
     var showSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
     var getSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => Array<ObjC.Object>
-
     var showSubClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
 }
 
 
 globalThis.showSuperClasses = showSuperClasses
 globalThis.getSuperClasses = getSuperClasses
-
 globalThis.showSubClasses = showSubClasses

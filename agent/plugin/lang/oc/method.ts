@@ -3,6 +3,10 @@ export class ObjCMethodIMPL extends ObjC.Object {
     toString(): string {
         return `C: ${this.implementation} ${this}`
     }
+
+    get ptr(){
+        return this.implememtation
+    }
  
 }
 

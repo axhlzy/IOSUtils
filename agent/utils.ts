@@ -72,15 +72,24 @@ globalThis.findSym = (filterName: string, exact: boolean = false, onlyFunction: 
         })
 }
 
-globalThis.checkPointer = (ptr: NativePointer | number | string | ObjC.Object, throwErr: boolean = true): NativePointer => {
+globalThis.checkPointer = (ptr: NativePointer | number | string | ObjC.Object | ObjC.ObjectMethod, throwErr: boolean = true): NativePointer => {
     let mPtr: NativePointer = NULL
     if (typeof ptr === 'string') {
         ptr = ptr.trim()
-        if (ptr.startsWith('0x')) mPtr = new NativePointer(parseInt(ptr, 16))
-        else {
-            mPtr = DebugSymbol.fromName(ptr).address
-            if (mPtr.isNull()) mPtr = ObjC.classes[ptr].handle
-            if (mPtr.isNull()) throw new Error(`Invalid pointer <- cannot find ${ptr}`)
+        if (ptr.startsWith('0x')) {
+            mPtr = new NativePointer(parseInt(ptr, 16))
+        } else {
+            try {
+                mPtr = ObjC.classes[ptr].handle
+            } catch { }
+            try {
+                if (mPtr.isNull()) mPtr = DebugSymbol.fromName(ptr).address
+            } catch { }
+            if (mPtr.isNull()) {
+                if (throwErr) throw new Error(`Invalid pointer <- cannot find '${ptr}'`)
+                return NULL
+            }
+            return mPtr
         }
     } else if (typeof ptr === 'number') {
         mPtr = new NativePointer(ptr)
@@ -316,7 +325,7 @@ declare global {
     var cls: () => void // alias for clear
     var findSym: (filterName: string, exact?: boolean, onlyFunction?: boolean) => void
     var hex: (ptr: NativePointer | string | number, len?: number) => void
-    var checkPointer: (ptr: NativePointer | number | string | ObjC.Object, throwErr?: boolean) => NativePointer
+    var checkPointer: (ptr: NativePointer | number | string | ObjC.Object | ObjC.ObjectMethod, throwErr?: boolean) => NativePointer
     var allocOCString: (str: string) => ObjC.Object
     var call: (ptr: NativePointer | number | string | ObjC.Object, ...args: any | NativePointer | ObjC.Object) => NativePointer
     var callOC: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => NativePointer
