@@ -1,3 +1,5 @@
+import { HK_TYPE } from "../../utils.js"
+
 export { }
 
 // 放假放假 代码刚写完 还没来得及测试 
@@ -5,35 +7,23 @@ class Breaker {
 
     // ref function ptr => IMP
     public static attachImpl(mPtr: NativePointer | number | string, defaultArgsC: number = 4) {
-        const localPtr: NativePointer = checkPointer(mPtr)
-        Interceptor.attach(localPtr, {
-            onEnter(args) {
-                let args_str = Array.from({ length: defaultArgsC }, (_, i) => args[i].toString()).join(', ')
-                logd(`called ${localPtr} | args -> ${args_str}`)
-            }
-        })
+        new objc_method(addressToMethod(checkPointer(mPtr) as NativePointer).handle).hook(HK_TYPE.FRIDA_REP, true, defaultArgsC)
     }
 
     //  ref Method => Method
-    public static attachMethod(mPtr: NativePointer | number | string | ObjC.ObjectMethod) {
-        const localPtr: NativePointer = checkPointer(mPtr)
-        var method = new ObjC.Class(localPtr) as unknown as ObjC.ObjectMethod // ref ObjectMethod
-        var old_impl = method.implementation as any
-        const count: number = call("method_getNumberOfArguments", method).toInt32()
-        method.implementation = ObjC.implement(method, function (clazz: NativePointer, selector: any, ...args: any[]) {
-            logw(`called ${ObjC.selectorAsString(selector)}`)
-            for (let i = 0; i < count - 2; i++) {
-                logz(`\t Arg ${i + 1}: ${args[i]}`)
-            }
-            return old_impl(clazz, selector, ...args)
-        })
+    public static attachMethod(mPtr: NativePointer | number | string) {
+        new objc_method(mPtr).hook(HK_TYPE.FRIDA_REP, true)
     }
 
     // ref Class / ObjC.Object
-    public static attachClass(mPtr: NativePointer | number | string | ObjC.Object) {
+    public static attachClass(mPtr: NativePointer | number | string | ObjC.Object, filterStr: string = '') {
         const localPtr: NativePointer = checkPointer(mPtr)
         const localObj = new ObjC.Class(localPtr) // ref Class
-        Breaker.itorMethod(localObj, (method, _impl) => Breaker.attachMethod(method))
+        Breaker.itorMethod(localObj, (method:ObjC.ObjectMethod, _impl) => {
+            const methodName = `${ObjC.selectorAsString(method.selector)}`
+            if (methodName.includes(filterStr)) Breaker.attachMethod(method.handle)
+            // else logz(`${method.implementation} -> ${methodName} | Warn: filter method name`)
+        })
     }
 
     public static itorMethod(obj: ObjC.Object, callback: (method: ObjC.ObjectMethod, impl: NativePointer) => void) {
@@ -55,8 +45,8 @@ class Breaker {
 }
 
 declare global {
-    var B: (mPtr: NativePointer | number | string | ObjC.Object) => void
-    var b: (mPtr: NativePointer | number | string | ObjC.ObjectMethod) => void
+    var B: (mPtr: NativePointer | number | string | ObjC.Object, filter?:string) => void
+    var b: (mPtr: NativePointer | number | string) => void
 }
 
 globalThis.b = Breaker.attachMethod

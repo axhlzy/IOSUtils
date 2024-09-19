@@ -104,7 +104,12 @@ globalThis.checkPointer = (ptr: NativePointer | number | string | ObjC.Object | 
 
 globalThis.allocOCString = (str: string): ObjC.Object => {
     if (str == undefined || str.length == 0 || str == null) throw new Error('Invalid string')
-    return ObjC.classes["NSString"]["+ stringWithUTF8String:"](Memory.allocUtf8String(str))
+    return ObjC.classes["NSString"]["+ stringWithUTF8String:"](allocCString(str))
+}
+
+globalThis.allocCString = (str: string): NativePointer => {
+    if (str == undefined || str.length == 0 || str == null) throw new Error('Invalid string')
+    return Memory.allocUtf8String(str)
 }
 
 /**
@@ -126,12 +131,13 @@ globalThis.allocOCString = (str: string): ObjC.Object => {
     
     call(0x1ba5328d8, 0x102e07840, ObjC.selector("- setText:"), allocOCString("123123123"))
  */
+const debugLog: boolean = true
 globalThis.call = (ptr: NativePointer | number | string | ObjC.Object, ...args: any[] | NativePointer[] | ObjC.Object[]): NativePointer => {
     try {
-        // logd(`Number of arguments: ${args.length}`)
-        // logd(`Arguments: ${args}`)
+        const target = checkPointer(ptr)
+        if (debugLog) logw(`Called -> Address: ${target}${typeof ptr == "string" ? ` ${ptr}\t` : ''} | Arguments [ ${args.length} ] -> ${args}`)
         const argsStr = args.map(arg => typeof arg === 'number' ? `"pointer"` : `"pointer"`).join(', ') // All types are treated as pointer
-        const func = eval(`new NativeFunction(new NativePointer(${checkPointer(ptr)}), 'pointer', [ ${argsStr} ])`)
+        const func = eval(`new NativeFunction(new NativePointer(${target}), 'pointer', [ ${argsStr} ])`)
         if (typeof func !== 'function') throw new Error("Error while Created NativeFunction")
         return func(...args.map(item => checkPointer(item as any)))
     } catch (error) {
@@ -319,6 +325,29 @@ const stk = (mPtr: NativePointer) => {
     })
 }
 
+globalThis.isObjcInstance = (mPtr: NativePointer): NativePointer => {
+    if (mPtr == undefined || mPtr.isNull()) return NULL
+    try {
+        return call("object_getClass", mPtr).readPointer()
+    } catch (error) {
+        return NULL
+    }
+}
+
+globalThis.addressToMethod = (mPtr: NativePointer): ObjC.ObjectMethod => {
+    const method: string = DebugSymbol.fromAddress(mPtr).name!
+    if (method[1] == '[' && method.endsWith(']')) {
+        let methodL = method.slice(2, -1)
+        const parts = methodL.split(' ')
+        if (parts.length != 2) throw new Error("Invalid format, there should be exactly one space.")
+        const className = parts[0]
+        const classMethod = `${method[0]} ${parts[1]}`
+        return ObjC.classes[className][classMethod]
+    } else {
+        throw new Error("Invalid format, should start with '+[' / '-[' and end with ']'")
+    }
+}
+
 declare global {
     var ProcessDispTask: any
     var clear: () => void
@@ -327,6 +356,7 @@ declare global {
     var hex: (ptr: NativePointer | string | number, len?: number) => void
     var checkPointer: (ptr: NativePointer | number | string | ObjC.Object | ObjC.ObjectMethod, throwErr?: boolean) => NativePointer
     var allocOCString: (str: string) => ObjC.Object
+    var allocCString: (str: string) => NativePointer
     var call: (ptr: NativePointer | number | string | ObjC.Object, ...args: any | NativePointer | ObjC.Object) => NativePointer
     var callOC: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => NativePointer
     var callOcOnMain: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => void
@@ -341,6 +371,15 @@ declare global {
     var D: () => void
 
     var stk: (mPtr: NativePointer) => void
+
+    var isObjcInstance: (mPtr: NativePointer) => NativePointer
+    var addressToMethod: (mPtr: NativePointer) => ObjC.ObjectMethod
+}
+
+export enum HK_TYPE {
+    FRIDA_ATTACH = 0,
+    FRIDA_REP = 1,
+    OBJC_REP = 2
 }
 
 

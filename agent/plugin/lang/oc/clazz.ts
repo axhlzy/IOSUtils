@@ -16,7 +16,6 @@ export class ObjCClassIMPL extends ObjC.Object {
     public toString(): string {
         return `C: ${this.implementation} ${this}`
     }
- 
 }
 
 declare global{

@@ -31,7 +31,13 @@ const getClassFromMethodName = (name: string, filterClass: Array<ObjC.Object>): 
 
 globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter: string = '', includeParent: boolean = false) => {
     const obj = new ObjC.Object(checkPointer(clsNameOrPtr))
-    logw(`\n[ ${obj.$className} ] ${obj.handle} <- cls:${obj.$class.handle}`)
+    logw(`\nDisplay methods of ${obj.$className} @ ${obj.$class.handle}`)
+
+    try {
+        const debugSym = DebugSymbol.fromAddress(obj.$class.handle)
+        const md = Process.findModuleByName(debugSym.moduleName!)
+        logz(`${debugSym.name} IN ${debugSym.moduleName} [ ${md?.path} ${ptr(md?.size!)} ]`)
+    } catch (error) { }
 
     showSuperClasses(obj)
 
@@ -130,7 +136,7 @@ globalThis.findClasses = (query: string, accurate: boolean = false) => {
         .filter(cls => accurate ? cls.$className == query : cls.$className.includes(query))
         .forEach(cls => {
             logd(`[ ${count++} ]\t${cls.$class.handle}  ${cls.$className}`)
-            let md = Process.findModuleByName(cls.$moduleName)
+            const md = Process.findModuleByName(cls.$moduleName)
             logz(`\t${md?.base} ${ptr(md?.size!)} \t ${cls.$moduleName}`)
         })
 
@@ -139,7 +145,7 @@ globalThis.findClasses = (query: string, accurate: boolean = false) => {
 
 globalThis.getSuperClasses = (ptr: NativePointer | number | string | ObjC.Object): Array<ObjC.Object> => {
     const obj = new ObjC.Object(checkPointer(ptr))
-    let cls_itor = obj.$class
+    let cls_itor: ObjC.Object = obj
     let arr = [cls_itor]
     while (true) {
         try {
