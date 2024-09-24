@@ -131,7 +131,7 @@ globalThis.allocCString = (str: string): NativePointer => {
     
     call(0x1ba5328d8, 0x102e07840, ObjC.selector("- setText:"), allocOCString("123123123"))
  */
-const debugLog: boolean = true
+const debugLog: boolean = false
 globalThis.call = (ptr: NativePointer | number | string | ObjC.Object, ...args: any[] | NativePointer[] | ObjC.Object[]): NativePointer => {
     try {
         const target = checkPointer(ptr)
@@ -141,9 +141,7 @@ globalThis.call = (ptr: NativePointer | number | string | ObjC.Object, ...args: 
         if (typeof func !== 'function') throw new Error("Error while Created NativeFunction")
         return func(...args.map(item => checkPointer(item as any)))
     } catch (error) {
-        loge(`Error during call: \n\t${error}`)
-        // throw error
-        return NULL
+        throw new Error(`Error during call: \n\t${error}`)
     }
 }
 

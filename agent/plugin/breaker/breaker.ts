@@ -2,7 +2,6 @@ import { HK_TYPE } from "../../utils.js"
 
 export { }
 
-// 放假放假 代码刚写完 还没来得及测试 
 class Breaker {
 
     // ref function ptr => IMP

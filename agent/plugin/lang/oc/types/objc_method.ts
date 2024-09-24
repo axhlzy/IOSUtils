@@ -120,8 +120,6 @@ class objc_method_local {
                             const il: NativePointer = i as NativePointer
                             if (c == 0) return `${new ObjC.Object(il)} @ ${il}`
                             if (c == 1) return ObjC.selectorAsString(il)
-                            // if (c == 1) return '_'
-                            // if (isObjcInstance(il)) return new ObjC.Object(il)
                             return ptr(i as any)
                         }).join(', ')
                         logd(`[ ${++objc_method_local.count} ]\tcalled ${argsStr}`)
