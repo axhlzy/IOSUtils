@@ -11,7 +11,7 @@ class Breaker {
 
     //  ref Method => Method
     public static attachMethod(mPtr: NativePointer | number | string) {
-        new objc_method(mPtr).hook(HK_TYPE.FRIDA_REP, true)
+        new objc_method(mPtr).hook(HK_TYPE.OBJC_REP, true)
     }
 
     // ref Class / ObjC.Object

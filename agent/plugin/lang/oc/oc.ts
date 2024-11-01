@@ -32,7 +32,6 @@ const getClassFromMethodName = (name: string, filterClass: Array<ObjC.Object>): 
 globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter: string = '', includeParent: boolean = false) => {
     const obj = new ObjC.Object(checkPointer(clsNameOrPtr))
     logw(`\nDisplay methods of ${obj.$className} @ ${obj.$class.handle}`)
-
     try {
         const debugSym = DebugSymbol.fromAddress(obj.$class.handle)
         const md = Process.findModuleByName(debugSym.moduleName!)
@@ -58,16 +57,30 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                     const method = obj.$class[m]
                     const impl = method.implementation
                     const md = Process.findModuleByAddress(impl)
-                    const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                    return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} -> ${rva} | ${m}`
+                    let extraDes: string = "-> "
+                    try {
+                        // after objc.implement, An error will be triggered here.
+                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                        extraDes += `${rva} `
+                    } catch (error) {
+                        extraDes = ''
+                    }
+                    return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} ${extraDes} | ${m}`
                 } catch (error) {
                     // instance methods
                     const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
                     const method = call("class_getInstanceMethod", obj, selector)
                     const impl = call("method_getImplementation", method)
                     const md = Process.findModuleByAddress(impl)
-                    const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                    return `[ ${i} ]\t M: ${method} -> ${impl} -> ${rva} | ${m}`
+                    let extraDes: string = "-> "
+                    try {
+                        // after objc.implement, An error will be triggered here.
+                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                        extraDes += `${rva} `
+                    } catch (error) {
+                        extraDes = ''
+                    }
+                    return `[ ${i} ]\t M: ${method} -> ${impl} ${extraDes}| ${m}`
                 }
             })
             .forEach((item, i) => item.includes(' _') ? logz(item) : logd(item))
@@ -98,16 +111,30 @@ globalThis.findMethods = (query: string, className?: string, accurate = false) =
                     const method = cls.$class[m]
                     const impl = method.implementation // throw error while type of class is instance
                     const md = Process.findModuleByAddress(impl)
-                    const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                    return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} -> ${rva} | ${m}`
+                    let extraDes: string = "-> "
+                    try {
+                        // after objc.implement, An error will be triggered here.
+                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                        extraDes += `${rva} `
+                    } catch (error) {
+                        extraDes = ''
+                    }
+                    return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} ${extraDes} | ${m}`
                 } catch (error) {
                     // instance methods
                     const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
                     const method = call("class_getInstanceMethod", cls, selector)
                     const impl = call("method_getImplementation", method)
                     const md = Process.findModuleByAddress(impl)
-                    const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                    return `[ ${i} ]\t M: ${method} -> ${impl} -> ${rva} | ${m}`
+                    let extraDes: string = "-> "
+                    try {
+                        // after objc.implement, An error will be triggered here.
+                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                        extraDes += `${rva} `
+                    } catch (error) {
+                        extraDes = ''
+                    }
+                    return `[ ${i} ]\t M: ${method} -> ${impl} ${extraDes} | ${m}`
                 }
             })
             .sort((a, b) => b[0].localeCompare(a[0]))
@@ -195,28 +222,52 @@ const showSubClasses = (ptr: NativePointer | number | string | ObjC.Object) => {
 
 globalThis.m = globalThis.showMethods
 
-const showMethod = (method: number | string | NativePointer) => {
-    // struct objc_method_description {
-    //     SEL _Nullable name;               /**< The name of the method */
-    //     char * _Nullable types;           /**< The types of the method arguments */
-    // };
-    class objc_method_description {
-        name: NativePointer
-        types: NativePointer
-        constructor(public mPtr: NativePointer) {
-            this.name = mPtr
-            this.types = mPtr.add(Process.pointerSize)
-        }
-        public toString() {
-            return `name: ${this.name.readPointer().readCString()} types: ${this.types.readPointer().readCString()}`
-        }
+globalThis.showMethod = (method: number | string | NativePointer, extName?: string) => {
+
+    // // struct objc_method_description {
+    // //     SEL _Nullable name;               /**< The name of the method */
+    // //     char * _Nullable types;           /**< The types of the method arguments */
+    // // };
+    // class objc_method_description {
+    //     name: NativePointer
+    //     types: NativePointer
+    //     constructor(public mPtr: NativePointer) {
+    //         this.name = mPtr
+    //         this.types = mPtr.add(Process.pointerSize)
+    //     }
+    //     public toString() {
+    //         return `name: ${this.name.readPointer().readCString()} types: ${this.types.readPointer().readCString()}`
+    //     }
+    // }
+
+    let localM: NativePointer = NULL
+    try {
+        localM = checkPointer(method)
+    } catch (error) {
+        // try use ApiResolver to find (methodName)
+        if (typeof method == "string") {
+            let found: ApiResolverMatch[]
+            if (method.includes('[')) {
+                found = new ApiResolver("objc").enumerateMatches(method)
+            } else {
+                found = new ApiResolver("objc").enumerateMatches(`*[* ${method}]`)
+            }
+            if (found != undefined && found != null && found.length != 0) {
+                found.forEach(item => showMethod(nameToMethod(item.name).handle, item.name))
+            } else {
+                throw new Error(`Not Found -> ${method}`)
+            }
+            return
+        } else throw error
     }
 
-    const localM = checkPointer(method)
+    logs(getLine(60, '-'))
+
+    logd(`Address\t\t\t->\t${localM}`)
 
     // OBJC_EXPORT SEL _Nonnull method_getName(Method _Nonnull m)
     const name = call("method_getName", localM).readCString() as string
-    logd(`Name\t\t\t->\t${name}`)
+    logd(`Name\t\t\t->\t${name} ${extName == undefined ? '' : ` | ${extName}`}`)
 
     const argsCount = call("method_getNumberOfArguments", localM).toInt32()
     logd(`NumberOfArguments\t->\t${argsCount}`)
@@ -231,64 +282,131 @@ const showMethod = (method: number | string | NativePointer) => {
 
     // OBJC_EXPORT IMP _Nonnull method_getImplementation(Method _Nonnull m) 
     const implementation = call("method_getImplementation", localM) as NativePointer
-    const rva = implementation.sub(Process.findModuleByAddress(implementation)?.base!)
-    logd(`Implementation\t\t->\t${implementation} | ${rva}`)
+    let extraDes: string
+    try {
+        const rva = implementation.sub(Process.findModuleByAddress(implementation)?.base!)
+        extraDes = `| ${rva} `
+        logd(`Implementation\t\t->\t${implementation} ${extraDes}`)
+    } catch (error) {
+        // already modify
+        extraDes = ''
+        logz(`Implementation\t\t->\t${implementation} ${extraDes}`)
+    }
+
+    const pk = getArgsAndRet(localM)
+    logd(`ReturnType`)
+    logd(`\tret: \t\t${pk.ret} - ${parseType(pk.ret)}`)
+    logd('ArgumentTypes')
+    pk.args.forEach((item, index) => logd(`\targs[${index}]:\t${item} - ${parseType(item)}`))
+}
+
+export const packArgs = (arg: NativePointer, type: string): string => {
+    // todo
+    if (type == "string") return arg.readCString() == null ? "" : arg.readCString()!
+    if (type == "class") return new ObjC.Object(arg).toString()
+    if (type == "object") return new ObjC.Object(arg).toString()
+    if (type == "selector") return ObjC.selectorAsString(arg)
+    if (type == "void") return ''
+    else return arg.toString()
+}
+
+export const getArgsAndRet = (method: NativePointer): { ret: string, args: Array<string> } => {
+
+    let packArgsAndRet: { ret: string, args: Array<string> } = { ret: "", args: [] }
 
     // OBJC_EXPORT char * _Nonnull method_copyReturnType(Method _Nonnull m) 
     // OBJC_EXPORT void method_getReturnType(Method _Nonnull m, char * _Nonnull dst, size_t dst_len) 
-    let dst_len: number = 0x20
-    let dst_ptr: NativePointer = Memory.alloc(dst_len)
-    call("method_getReturnType", localM, dst_ptr, dst_len)
-    const type = dst_ptr.readCString()
-    logd(`ReturnType\n\tret: \t\t${type} - ${parseType(type)}`)
+    const dst_len: number = 0x20
+    const dst_ptr: NativePointer = Memory.alloc(dst_len)
+    call("method_getReturnType", method, dst_ptr, dst_len)
+    const type: string = dst_ptr.readCString()!
+    packArgsAndRet.ret = type
+
     dst_ptr.writeByteArray(Array.from(new Uint8Array(dst_len)))
 
     // OBJC_EXPORT char * _Nullable method_copyArgumentType(Method _Nonnull m, unsigned int index) 
     // OBJC_EXPORT void method_getArgumentType(Method _Nonnull m, unsigned int index, char * _Nullable dst, size_t dst_len) 
-    let desArgs = ''
-    for (let i = 0, j = 0; i < argsCount; i++) {
+    for (let i = 0; i < call("method_getNumberOfArguments", method).toInt32(); i++) {
         try {
             dst_ptr.writeByteArray(Array.from(new Uint8Array(dst_len)))
-            call("method_getArgumentType", localM, i, dst_ptr, dst_len)
-            const type = dst_ptr.readCString()
-            const type_str = parseType(type)
-            desArgs += `\targs[${i}]:\t${type} - ${type_str}\n`
+            call("method_getArgumentType", method, i, dst_ptr, dst_len)
+            packArgsAndRet.args[i] = dst_ptr.readCString()!
         } catch (error) {
-            desArgs += `\targs[${i}]:\t-\n`
-            // loge(error)
+            if (i == 0) packArgsAndRet.args[0] = "@"
+            else throw error
         }
     }
-    logd(`ArgumentTypes\n${desArgs}`)
+    return packArgsAndRet
 }
 
-const parseType = (typeStr: string | null): string => {
-    if (typeStr == null || typeStr == undefined) return ''
-    if (typeStr == "v") return "void"
-    if (typeStr == "b") return "BOOL"
-    if (typeStr == "i") return "int"
-    if (typeStr == "q") return "long"
-    if (typeStr == "f") return "float"
-    if (typeStr == "d") return "double"
-    if (typeStr == "*") return "char *"
-    if (typeStr == "@") return "id"
-    if (typeStr == ":") return "SEL"
-    if (typeStr == "#") return "Class"
-    if (typeStr == "^") return "void *"
-    if (typeStr.startsWith("{")) return "struct"
-    return typeStr
-}
+/**
+ * parse type to string 
+ * @param typeStr type string
+ * @param toDisplay disp(default) or fridaType
+ * @returns 
+ */
+const parseType = (typeStr: string | null, toDisplay: boolean = true): string => {
 
-globalThis.showMethod = showMethod
-
-// cls can be instanceof ObjC.ObjC or Class(OC MetaClass)
-const listFields = (cls: number | string | NativePointer) => {
-    const localCls = checkPointer(cls)
-    const ObjCls = new ObjC.Object(localCls)
-    for (const k in ObjCls.$ivars) {
-        logd(k)
+    const idByAlias: Record<string, string> = {
+        'c': 'char',
+        'i': 'int',
+        's': 'int16',
+        'q': 'int64',       // long
+        'C': 'uchar',
+        'I': 'uint',
+        'S': 'uint16',
+        'Q': 'uint64',
+        'f': 'float',
+        'd': 'double',
+        'B': 'bool',        // BOOL
+        'b': 'bool',
+        'v': 'void',
+        '*': 'string',      // char *
+        '@': 'object',      // id
+        '@?': 'block',
+        '#': 'class',       // Class
+        ':': 'selector',    // SEL
+        '^v': 'pointer'     // void *
     }
 
+    const fridaTypeExt: Record<string, string> = {
+        'BOOL': 'bool',
+        'object': 'pointer',
+        'block': 'pointer',
+        'class': 'pointer',
+        'selector': 'pointer'
+    }
+
+    if (typeStr == null || typeStr == undefined) return ''
+
+    if (toDisplay) {
+        // to display
+        if (typeStr in idByAlias) return idByAlias[typeStr]
+        if (typeStr.startsWith("{")) return "struct"
+        // throw new Error(`Type case not impl ? ${typeStr}`)
+        return `${typeStr} <- parse error`
+    } else {
+        // to frida type
+        if (typeStr in idByAlias) {
+            const ret = idByAlias[typeStr]
+            const ret_case = fridaTypeExt[ret]
+            return ret_case == undefined ? ret : ret_case
+        }
+        // throw new Error(`Type case not impl ? ${typeStr}`)
+        return `pointer`
+    }
 }
+
+globalThis.getFields = (cls: number | string | NativePointer): Array<string> => {
+    const localCls = checkPointer(cls)
+    const ObjCls = new ObjC.Object(localCls)
+    let fields: Array<string> = new Array()
+    for (const k in ObjCls.$ivars) { fields.push(k) }
+    return fields
+}
+
+// cls can be instanceof ObjC.ObjC or Class(OC MetaClass)
+const listFields = (cls: number | string | NativePointer) => getFields(cls).forEach(logd)
 
 globalThis.f = listFields
 
@@ -335,7 +453,8 @@ declare global {
     var showMethods: (clsNameOrPtr: number | string | NativePointer, filter?: string, includeParent?: boolean) => void
     var m: (clsNameOrPtr: number | string | NativePointer, filter?: string, includeParent?: boolean) => void // alias for showMethods
     var f: (clsNameOrPtr: number | string | NativePointer) => void
-    var showMethod: (method: number | string | NativePointer) => void
+    var getFields: (cls: number | string | NativePointer) => Array<string>
+    var showMethod: (method: number | string | NativePointer, extName?: string) => void
     var findMethods: (query: string, className?: string, accurate?: boolean) => void
     var findMethodsByResolver: (query: string) => void
     var findClasses: (query: string) => void

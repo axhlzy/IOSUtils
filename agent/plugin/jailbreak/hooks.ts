@@ -13,6 +13,9 @@ const checkIfContainJbPaths = (str: string): boolean => {
         "/User/Applications/",
         "/private/var/lib/apt/",
         "/private/var/lib/cydia/",
+        "substitute",
+        "substrate",
+        "CepheiUI"
     ]
     return JbPaths.some(item => str.includes(item))
 }
@@ -253,6 +256,7 @@ const hook_get_image_name = () => {
             const ret_str = retval.readCString()
             if (ret_str == null) return
             const disp_str = `${this.disp} => '${ret_str}'`
+            if (!SLOG) logd(disp_str)
             if (ret_str.includes("substitute")
                 || ret_str.includes("substrate")
                 || ret_str.includes("CepheiUI")
@@ -263,12 +267,11 @@ const hook_get_image_name = () => {
                     .replace("substrate", "---")
                     .replace("CepheiUI", "---")
                 retval.replace(Memory.allocUtf8String(new_ret))
-                console.log('called from:\n' +
+                logd('called from:\n' +
                     Thread.backtrace(this.context, Backtracer.ACCURATE)
                         .map(DebugSymbol.fromAddress).join('\n') + '\n')
                 return
             }
-            if (!SLOG) logd(disp_str)
         }
     })
 
@@ -413,6 +416,9 @@ const hook_getenv = () => {
             if (this.envName != null && this.envName == "DYLD_INSERT_LIBRARIES") {
                 loge(`${disp}`)
                 retval.replace(NULL)
+                logd('called from:\n' +
+                    Thread.backtrace(this.context, Backtracer.ACCURATE)
+                        .map(DebugSymbol.fromAddress).join('\n') + '\n')
             } else if (!SLOG) {
                 logd(`${disp}`)
             }
@@ -481,7 +487,6 @@ const hook_NSClassFromString = () => {
     })
 }
 
-
 declare global {
     var hook_all_detect: () => void
     var hook_stat: () => void
@@ -494,6 +499,9 @@ declare global {
     var hook_getenv: () => void
     var hook_ptrace: () => void
     var hook_NSClassFromString: () => void
+
+    var hook_exit: () => void
+    var hook_strcmp: ()=> void
 }
 
 globalThis.hook_all_detect = () => {
@@ -520,4 +528,42 @@ globalThis.hook_getenv = hook_getenv
 globalThis.hook_ptrace = hook_ptrace
 globalThis.hook_NSClassFromString = hook_NSClassFromString
 
-// hook_all_detect()
+globalThis.hook_exit = () => {
+    Interceptor.attach(Module.findExportByName(null, "exit")!, {
+        onEnter(args) {
+            const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join("\n\t")
+            console.warn("\n[-] ======== Backtrace Start  ========")
+            console.log(backtrace)
+            console.warn("\n[-] ======== Backtrace End  ========")
+        },
+    })
+}
+
+globalThis.hook_strcmp = ()=>{
+    Interceptor.attach(Module.findExportByName(null, "strcmp")!, {
+        onEnter(args) {
+            const arg0 = args[0].readCString()
+            const arg1 = args[1].readCString()
+            logd(`strcmp ( ${arg0}, ${arg1} )`)
+        },
+    })
+}
+
+// if (ObjC.available) {
+//     const NSString = ObjC.classes.NSString
+//     Interceptor.attach(NSString["- isEqualToString:"].implementation, {
+//         onEnter: function (args) {
+//             // args[0] 是 'self'
+//             // args[1] 是 '_cmd'（这里的命令或方法选择器）
+//             // args[2] 是与之比较的 NSString 对象
+//             const selfStr = new ObjC.Object(args[0]).toString()
+//             const compareStr = new ObjC.Object(args[2]).toString()
+//             this.passStr = `'${selfStr}', '${compareStr}'`
+//         },
+//         onLeave: function (retval) {
+//             logd(`isEqualToString: ( ${this.passStr}) | Returns ${retval}`)
+//         }
+//     })
+// } else {
+//     loge("Objective-C runtime is not available.")
+// }

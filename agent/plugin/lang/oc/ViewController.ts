@@ -48,13 +48,21 @@ const hook_ViewController = () => {
             }
         })
 
-        // - dismissViewControllerAnimated:completion:
+        // // - dismissViewControllerAnimated:completion:
         Interceptor.attach(ObjC.classes["UIViewController"]["- dismissViewControllerAnimated:completion:"].implementation, {
             onEnter(args) {
                 const instance = new ObjC.Object(args[0])
                 logd(`\nCalled dismissViewControllerAnimated:'${instance}' Animated:'${args[2]}' completion:'${args[3]}'`)
             }
         })
+
+        // const src_function = new NativeFunction(ObjC.classes["UIViewController"]["- dismissViewControllerAnimated:completion:"].implementation, "void", ["pointer"])
+        // Interceptor.replace(ObjC.classes["UIViewController"]["- dismissViewControllerAnimated:completion:"].implementation, new NativeCallback((_instance: NativePointer, a1: NativePointer, a2: NativePointer) => {
+        //     const instance = new ObjC.Object(_instance)
+        //     logd(`\nCalled dismissViewControllerAnimated:'${instance}' Animated:'${a1}' completion:'${a2}'`)
+        //     return
+        //     // return src_function(instance)
+        // }, "void", ["pointer", "pointer", "pointer"]))
 
         // - dismissViewControllerWithTransition:completion:
         Interceptor.attach(ObjC.classes["UIViewController"]["- dismissViewControllerWithTransition:completion:"].implementation, {
@@ -67,7 +75,7 @@ const hook_ViewController = () => {
     }
 }
 
-const hook_UIAlertController = ()=>{
+const hook_UIAlertController = () => {
 
     // UIAlertController + alertControllerWithTitle:message:preferredStyle:
     Interceptor.attach(ObjC.classes["UIAlertController"]["+ alertControllerWithTitle:message:preferredStyle:"].implementation, {
@@ -76,7 +84,7 @@ const hook_UIAlertController = ()=>{
             const msg = new ObjC.Object(args[3])
             logd(`\nCalled alertControllerWithTitle:'${title}' message:'${msg}' preferredStyle:${args[4]}`)
         }, onLeave(retval) {
-            const instance :ObjC.Object = new ObjC.Object(retval)
+            const instance: ObjC.Object = new ObjC.Object(retval)
             const _actions = instance.$ivars["_actions"] as ObjC.Object
             const count = _actions["- count"]()
             logz(`\t${instance} | actions:${_actions.handle} [ ${count} ]`)
@@ -123,3 +131,75 @@ declare global {
 
 globalThis.hook_ViewController = hook_ViewController
 globalThis.hook_UIAlertController = hook_UIAlertController
+
+
+// setImmediate(() => {
+
+//     Interceptor.attach(ObjC.classes["UIViewController"]["- viewDidLoad"].implementation, {
+//         onEnter(args) {
+//             const obj = new ObjC.Object(args[0])
+//             console.warn(`\nCalled UIViewController viewDidLoad:'${obj}'`)
+//         }
+//     })
+
+//     Interceptor.attach(ObjC.classes["Runner.NRViewController"]["- viewDidLoad"].implementation, {
+//         onEnter(args) {
+//             const obj = new ObjC.Object(args[0])
+//             console.warn(`\nCalled NRViewController viewDidLoad:'${obj}'`)
+//         }
+//     })
+
+//     // - application:didFinishLaunchingWithOptions:
+//     // Interceptor.attach(ObjC.classes["Runner.AppDelegate"]["- application:didFinishLaunchingWithOptions:"].implementation, {
+//     //     onEnter(args) {
+//     //         const obj = new ObjC.Object(args[0])
+//     //         console.warn(`\nCalled AppDelegate didFinishLaunchingWithOptions:'${obj}'`)
+//     //         this.ins = args[0]
+//     //     },
+//     //     onLeave(retval) {
+//     //         console.log(`${new ObjC.Object(this.ins).$ivars["_window"].$ivars["_rootViewController"]}`)
+//     //         new ObjC.Object(this.ins).$ivars["_window"].$ivars["_rootViewController"] = ObjC.classes["Runner.NRViewController"]["new"]()
+//     //         const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join("\n\t")
+//     //         console.log(backtrace)
+//     //         console.log(`${new ObjC.Object(this.ins).$ivars["_window"].$ivars["_rootViewController"]}`)
+//     //     },
+//     // })
+
+//     const addr = ptr(ObjC.classes["Runner.AppDelegate"]["- application:didFinishLaunchingWithOptions:"].implementation)
+//     console.error(addr)
+//     const src_function = new NativeFunction(addr, "pointer", ["pointer", "pointer", "pointer"])
+//     Interceptor.replace(addr, new NativeCallback((_instance: NativePointer, sel: NativePointer, launchOptions: NativePointer) => {
+//         let ret = src_function(_instance, sel, launchOptions)
+//         const instance = new ObjC.Object(_instance)
+//         logd(`\nCalled didFinishLaunchingWithOptions:'${instance}' launchOptions:'${launchOptions}'`)
+//         console.log(`${instance.$ivars["_window"].$ivars["_rootViewController"]}`)
+//         instance.$ivars["_window"].$ivars["_rootViewController"] = ObjC.classes["Runner.NRViewController"]["new"]()
+//         console.log(`${instance.$ivars["_window"].$ivars["_rootViewController"]}`)
+//         return ret
+//     }, "pointer", ["pointer", "pointer", "pointer"]))
+
+
+
+//     Interceptor.attach(ObjC.classes["FlutterAppDelegate"]["- init"].implementation, {
+//         onEnter(args) {
+//             const obj = new ObjC.Object(args[0])
+//             console.warn(`\nCalled FlutterAppDelegate init:'${obj}'`)
+//             this.ins = args[0]
+//         },
+//         onLeave(retval) {
+
+//         },
+//     })
+
+//     var target_method = ObjC.classes["Runner.AppDelegate"]["- application:didFinishLaunchingWithOptions:"]
+//     var old_impl = target_method.implementation
+//     target_method.implementation = ObjC.implement(target_method, function (_instance, s, s1, launchOptions) {
+//         let ret = old_impl(_instance, s, s1, launchOptions)
+//         const instance = new ObjC.Object(_instance)
+//         console.log(`\nCalled didFinishLaunchingWithOptions:'${instance}' launchOptions:'${launchOptions}'`)
+//         console.log(`${instance.$ivars["_window"].$ivars["_rootViewController"]}`)
+//         instance.$ivars["_window"].$ivars["_rootViewController"] = ObjC.classes["Runner.NRViewController"]["new"]()
+//         console.log(`${instance.$ivars["_window"].$ivars["_rootViewController"]}`)
+//         return ret
+//     })
+// })

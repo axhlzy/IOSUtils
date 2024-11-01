@@ -21,7 +21,11 @@ export class Logger {
     static LOGP = (msg: any): void => Logger.LOG(msg, LogColor.C34)
     static LOGM = (msg: any): void => Logger.LOG(msg, LogColor.C92)
     static LOGH = (msg: any): void => Logger.LOG(msg, LogColor.C95)
+    static LOGS = (msg: any): void => Logger.LOG(msg, LogColor.C96)
     static LOGZ = (msg: any): void => Logger.LOG(msg, LogColor.C90)
+
+    static LOGLL = (msg: any): void => Logger.LOG(msg, LogColor.C100)
+    
     static LOGJSON = (obj: any, type: LogColor = LogColor.C36, space: number = 1): void => Logger.LOG(JSON.stringify(obj, null, space), type)
 
     private static logL = console.log
@@ -108,10 +112,12 @@ declare global {
     var logg: (msg: any) => void // LogColor.C32
     var logo: (msg: any) => void // LogColor.C33
     var logp: (msg: any) => void // LogColor.C33
-    var logp: (msg: any) => void // LogColor.C96
-    var logh: (msg: any) => void // LogColor.C96
-    var logm: (msg: any) => void // LogColor.C96
+    var logp: (msg: any) => void // LogColor.C92
+    var logh: (msg: any) => void // LogColor.C92
+    var logm: (msg: any) => void // LogColor.C95
+    var logs: (msg: any) => void // LogColor.C96
     var logz: (msg: any) => void // LogColor.C90
+    var logl: (msg: any) => void // LogColor.C102
     var LOGJSON: (obj: any, type?: LogColor, lines?: number) => void
     var newLine: (lines?: number) => void
     var getLine: (length: number, fillStr?: string) => string
@@ -131,6 +137,8 @@ globalThis.logp = Logger.LOGP
 globalThis.logh = Logger.LOGH
 globalThis.logm = Logger.LOGM
 globalThis.logz = Logger.LOGZ
+globalThis.logs = Logger.LOGS
+globalThis.logl = Logger.LOGLL
 globalThis.LOGJSON = Logger.LOGJSON
 globalThis.getLine = Logger.getLine
 globalThis.printLogColors = Logger.printLogColors

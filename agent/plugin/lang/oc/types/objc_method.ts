@@ -1,3 +1,4 @@
+import { getArgsAndRet, packArgs } from "../oc.js"
 import { HK_TYPE } from "../../../../utils.js"
 
 // typedef struct objc_selector *SEL;
@@ -136,9 +137,16 @@ class objc_method_local {
                 const old_impl = method.implementation as any
                 try {
                     method.implementation = ObjC.implement(method, function (clazz: NativePointer, selector: NativePointer, ...args: any[]) {
+                        const ret = old_impl(clazz, selector, ...args)
                         const argsStr = args.map((i, _c) => i as NativePointer).join(', ')
+                        // const pk = getArgsAndRet(method as unknown as NativePointer)
                         logd(`[ ${++objc_method_local.count} ]\tcalled ${new ObjC.Object(clazz)} @ ${clazz}, ${ObjC.selectorAsString(selector)} ${argsStr}`)
-                        return old_impl(clazz, selector, ...args)
+                        // todo
+                        // logz(`ret => ${packArgs(ret, pk.ret)}`)
+                        // for (let i=0;i<pk.args.length;i++){
+                        //     logz(`args[${i}]:${packArgs(args[i+2], pk.args[i+2])}`)
+                        // }
+                        return ret
                     })
                     logd(`hooking ${this.address} -> ${this.sel}`)
                 } catch (error) {

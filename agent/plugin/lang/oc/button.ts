@@ -92,9 +92,25 @@ class UIControlTargetAction {
 
 const showButtonActions = (ptr: NativePointer | number | string) => {
     const mPtr = checkPointer(ptr)
-    const obj = new ObjC.Object(mPtr)
-    if (!getSuperClasses(mPtr).map(i => i.$className).includes("UIButton"))
-        throw new Error(`pointer --//--> class extends UIButton ${ObjC.classes['UIButton']} ? C:${obj}`)
+    let obj = new ObjC.Object(mPtr)
+    if (!getSuperClasses(mPtr).map(i => i.$className).includes("UIButton")){
+        // UIButtonLabel props ↓
+        // UIButtonLabel extends UILabel ? Four new member variables have been added ?
+        // ......
+        // [68] _reverseShadow: | boolean
+        //         false
+        // [69] _button: | ObjC.Object <- instance of UPXCommonButton @ 0x1060b72b0
+        //         0x107da0cc0
+        // [70] _cachedDefaultAttributes: | ObjC.Object <- instance of __NSDictionaryM @ 0x1dc788050
+        //         0x2820daee0
+        // [71] _fontIsDefaultForIdiom: | boolean
+        //         false
+        if (getFields(mPtr).includes("_button")){
+            obj = obj.$ivars["_button"]
+        } else {
+            throw new Error(`pointer --//--> class extends UIButton ${ObjC.classes['UIButton']} ? C:${obj}`)
+        }
+    }
     const actions = obj.$ivars["_targetActions"]
     if (actions.isNull()) throw new Error(`targetActions == ${actions} }`)
     const count = actions["- count"]() as number

@@ -193,20 +193,24 @@ globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) =>
     const vars = obj.$ivars
     let index: number = 0
     for (const k in vars) {
-        if (vars.hasOwnProperty(k)) {
-            const v = vars[k] as Object
-            $clonedIvars[k] = bytesToUTF8(v)
-            if (ret) continue
-            if (v instanceof ObjC.Object) {
-                logd(`[${++index}] ${k}: | ObjC.Object <- ${v.$kind} of ${v.$className} @ ${v.$class.handle}`)
-                logz(`\t${v.handle}`)
-            } else if (typeof v == "object") {
-                logd(`[${++index}] ${k}: | ${typeof v}`)
-                logz(`\t${v}`)
-            } else {
-                logd(`[${++index}] ${k}: | ${typeof v}`)
-                logz(`\t${$clonedIvars[k]}`)
-            }
+        try {
+            if (vars.hasOwnProperty(k)) {
+                const v = vars[k] as Object
+                $clonedIvars[k] = bytesToUTF8(v)
+                if (ret) continue
+                if (v instanceof ObjC.Object) {
+                    logd(`[${++index}] ${k}: | ObjC.Object <- ${v.$kind} of ${v.$className} @ ${v.$class.handle}`)
+                    logz(`\t${v.handle}`)
+                } else if (typeof v == "object") {
+                    logd(`[${++index}] ${k}: | ${typeof v}`)
+                    logz(`\t${v}`)
+                } else {
+                    logd(`[${++index}] ${k}: | ${typeof v}`)
+                    logz(`\t${$clonedIvars[k]}`)
+                }
+            }  
+        } catch (error) {
+            
         }
     }
     if (ret) return $clonedIvars
@@ -332,8 +336,8 @@ globalThis.isObjcInstance = (mPtr: NativePointer): NativePointer => {
     }
 }
 
-globalThis.addressToMethod = (mPtr: NativePointer): ObjC.ObjectMethod => {
-    const method: string = DebugSymbol.fromAddress(mPtr).name!
+// +[UPWDeviceUtil deviceOSVersion] => {clsName, methodName}
+globalThis.nameToMethod = (method:string): ObjC.ObjectMethod=> {
     if (method[1] == '[' && method.endsWith(']')) {
         let methodL = method.slice(2, -1)
         const parts = methodL.split(' ')
@@ -344,6 +348,10 @@ globalThis.addressToMethod = (mPtr: NativePointer): ObjC.ObjectMethod => {
     } else {
         throw new Error("Invalid format, should start with '+[' / '-[' and end with ']'")
     }
+}
+
+globalThis.addressToMethod = (mPtr: NativePointer): ObjC.ObjectMethod => {
+    return nameToMethod(DebugSymbol.fromAddress(mPtr).name!)
 }
 
 declare global {
@@ -372,6 +380,7 @@ declare global {
 
     var isObjcInstance: (mPtr: NativePointer) => NativePointer
     var addressToMethod: (mPtr: NativePointer) => ObjC.ObjectMethod
+    var nameToMethod: (name: string) => ObjC.ObjectMethod
 }
 
 export enum HK_TYPE {
