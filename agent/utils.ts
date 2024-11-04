@@ -354,6 +354,22 @@ globalThis.addressToMethod = (mPtr: NativePointer): ObjC.ObjectMethod => {
     return nameToMethod(DebugSymbol.fromAddress(mPtr).name!)
 }
 
+globalThis.showAsm = (mPtr:NativePointer, len:number = 0x20) => {
+    const l_mPtr = checkPointer(mPtr)
+    let next :NativePointer = l_mPtr
+    newLine()
+    while (len-- > 0){
+        try {
+            const ins = Instruction.parse(next)
+            logd(`${ins.address} ${ins.mnemonic} ${ins.opStr}`)
+            next = ins.next
+        } catch (error) {
+            // ...   
+        }
+    }
+    newLine()
+}
+
 declare global {
     var ProcessDispTask: any
     var clear: () => void
@@ -381,6 +397,8 @@ declare global {
     var isObjcInstance: (mPtr: NativePointer) => NativePointer
     var addressToMethod: (mPtr: NativePointer) => ObjC.ObjectMethod
     var nameToMethod: (name: string) => ObjC.ObjectMethod
+
+    var showAsm : (mPtr:NativePointer, len?:number) => void
 }
 
 export enum HK_TYPE {

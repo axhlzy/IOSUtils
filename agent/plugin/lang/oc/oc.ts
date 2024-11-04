@@ -1,4 +1,4 @@
-export { }
+import { OC_Hook_Status } from "./types/objc_method.js"
 
 var cacheAllClass: ObjC.Object[] = []
 
@@ -58,12 +58,16 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                     const impl = method.implementation
                     const md = Process.findModuleByAddress(impl)
                     let extraDes: string = "-> "
-                    try {
-                        // after objc.implement, An error will be triggered here.
-                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                        extraDes += `${rva} `
-                    } catch (error) {
-                        extraDes = ''
+                    if (md != null) {
+                        try {
+                            // after objc.implement, An error will be triggered here.
+                            const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                            extraDes += `${rva} `
+                        } catch (error) {
+                            extraDes = ''
+                        }
+                    } else {
+                        extraDes += `${OC_Hook_Status.getNewImplFromOCMethod(method)} `
                     }
                     return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} ${extraDes} | ${m}`
                 } catch (error) {
@@ -73,12 +77,16 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                     const impl = call("method_getImplementation", method)
                     const md = Process.findModuleByAddress(impl)
                     let extraDes: string = "-> "
-                    try {
-                        // after objc.implement, An error will be triggered here.
-                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                        extraDes += `${rva} `
-                    } catch (error) {
-                        extraDes = ''
+                    if (md != null) {
+                        try {
+                            // after objc.implement, An error will be triggered here.
+                            const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                            extraDes += `${rva} `
+                        } catch (error) {
+                            extraDes = ''
+                        }
+                    } else {
+                        extraDes += `${OC_Hook_Status.getNewImplFromOCMethod(method)} `
                     }
                     return `[ ${i} ]\t M: ${method} -> ${impl} ${extraDes}| ${m}`
                 }
@@ -102,8 +110,8 @@ globalThis.findMethods = (query: string, className?: string, accurate = false) =
 
     function ItorClassMethods(cls: ObjC.Object, query: string, accurate: boolean) {
         const methods = cls.$methods.filter((m) => accurate ? m == query : m.includes(query))
-        if (methods.length != 0)
-            logw(`\n[!] ${cls.handle} | ${methods.length} | ${cls.$className} \n`)
+        if (methods.length != 0) logw(`\n[!] ${cls.handle} | ${methods.length} | ${cls.$className} \n`)
+        else throw new Error(`class methods len = ${cls.$methods} ... after Fileter ${methods.length}`)
         methods
             .map((m, i) => {
                 try {
@@ -224,23 +232,7 @@ globalThis.m = globalThis.showMethods
 
 globalThis.showMethod = (method: number | string | NativePointer, extName?: string) => {
 
-    // // struct objc_method_description {
-    // //     SEL _Nullable name;               /**< The name of the method */
-    // //     char * _Nullable types;           /**< The types of the method arguments */
-    // // };
-    // class objc_method_description {
-    //     name: NativePointer
-    //     types: NativePointer
-    //     constructor(public mPtr: NativePointer) {
-    //         this.name = mPtr
-    //         this.types = mPtr.add(Process.pointerSize)
-    //     }
-    //     public toString() {
-    //         return `name: ${this.name.readPointer().readCString()} types: ${this.types.readPointer().readCString()}`
-    //     }
-    // }
-
-    let localM: NativePointer = NULL
+    let localM: NativePointer | ObjC.ObjectMethod = NULL
     try {
         localM = checkPointer(method)
     } catch (error) {
@@ -263,8 +255,6 @@ globalThis.showMethod = (method: number | string | NativePointer, extName?: stri
 
     logs(getLine(60, '-'))
 
-    logd(`Address\t\t\t->\t${localM}`)
-
     // OBJC_EXPORT SEL _Nonnull method_getName(Method _Nonnull m)
     const name = call("method_getName", localM).readCString() as string
     logd(`Name\t\t\t->\t${name} ${extName == undefined ? '' : ` | ${extName}`}`)
@@ -276,15 +266,39 @@ globalThis.showMethod = (method: number | string | NativePointer, extName?: stri
     const typeEncoding = call("method_getTypeEncoding", localM).readCString()
     logd(`TypeEncoding\t\t->\t${typeEncoding}`)
 
-    // alias name + types ↓
+    // // struct objc_method_description {
+    // //     SEL _Nullable name;               /**< The name of the method */
+    // //     char * _Nullable types;           /**< The types of the method arguments */
+    // // };
+    // class objc_method_description {
+    //     name: NativePointer
+    //     types: NativePointer
+    //     constructor(public mPtr: NativePointer) {
+    //         this.name = mPtr
+    //         this.types = mPtr.add(Process.pointerSize)
+    //     }
+    //     public toString() {
+    //         return `name: ${this.name.readPointer().readCString()} types: ${this.types.readPointer().readCString()}`
+    //     }
+    // }
+
+    // // alias name + types ↓
     // const description = new objc_method_description(call("method_getDescription", localM))
     // logd(`Description\t\t->\t${description}`)
+
+    logd(`ObjectMethod\t\t->\t${localM}`)
 
     // OBJC_EXPORT IMP _Nonnull method_getImplementation(Method _Nonnull m) 
     const implementation = call("method_getImplementation", localM) as NativePointer
     let extraDes: string
     try {
-        const rva = implementation.sub(Process.findModuleByAddress(implementation)?.base!)
+        const md: Module | null = Process.findModuleByAddress(implementation)
+        let rva: string = ''
+        if (md == null) {
+            rva = `${OC_Hook_Status.getNewImplFromOCMethod(localM)} [R]`
+        } else {
+            rva = `${implementation.sub(md.base!)}`
+        }
         extraDes = `| ${rva} `
         logd(`Implementation\t\t->\t${implementation} ${extraDes}`)
     } catch (error) {

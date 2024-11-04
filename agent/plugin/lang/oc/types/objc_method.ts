@@ -10,6 +10,37 @@ type id = NativePointer
 type IMP = (id: id, sel: SEL, ...args: NativePointer[]) => id
 type IMPS = (...args: NativePointer[]) => id
 
+export class OC_Hook_Status {
+
+    // global map save srcImpl to modifyImpl ptr
+    static mapSrcToNewImpl: Map<NativePointer | ObjC.ObjectMethod, { newPtr: NativePointer, oldPtr: NativePointer }> = new Map()
+
+    static getNewImplFromOld(oldPtr_: NativePointer): NativePointer {
+        for (const [_key, value] of OC_Hook_Status.mapSrcToNewImpl) {
+            if (value.oldPtr.equals(oldPtr_)) return value.newPtr
+        }
+        return NULL
+    }
+
+    static getNewImplFromOCMethod(objcMethod: NativePointer | ObjC.ObjectMethod) {
+        return OC_Hook_Status.mapSrcToNewImpl.get(objcMethod)?.oldPtr
+    }
+
+    static addNew(objcMethod: NativePointer | ObjC.ObjectMethod, newPtr: NativePointer, oldPtr: NativePointer) {
+        OC_Hook_Status.mapSrcToNewImpl.set(objcMethod, { newPtr: newPtr, oldPtr: oldPtr })
+    }
+
+    static disp() {
+        let index: number = 0
+        newLine()
+        for (const [key, value] of OC_Hook_Status.mapSrcToNewImpl) {
+            let objM : ObjC.ObjectMethod = key as ObjC.ObjectMethod
+            logd(`[${index++}] \tobjcMethod:${objM.handle} => { newPtr:${value.newPtr}, oldPtr:${value.oldPtr} }`)
+        }
+        newLine()
+    }
+}
+
 class objc_method_local {
 
     private methodFHandle: ObjC.ObjectMethod | undefined
@@ -77,7 +108,7 @@ class objc_method_local {
     }
 
     static count: number = 0
-    public hook(hooktype: HK_TYPE = this.HookType, passPrivate: boolean = true, defaultArgsC:number = 6) {
+    public hook(hooktype: HK_TYPE = this.HookType, passPrivate: boolean = true, defaultArgsC: number = 6) {
 
         if (passPrivate && this.sel.startsWith('_')) {
             logw(`hooking ${this.address} -> ${this.sel} | pass private method`)
@@ -93,11 +124,9 @@ class objc_method_local {
             case HK_TYPE.FRIDA_ATTACH:
                 const argsCount = this.argsCount
                 try {
-                    Interceptor.attach(this.address, {
-                        onEnter(args) {
-                            const argsStr = Array.from({ length: argsCount }, (_, i) => args[i].toString()).join(', ')
-                            logd(`[ ${++objc_method_local.count} ]\tcalled ${argsStr}`)
-                        }
+                    A(this.address, (args) => {
+                        const argsStr = Array.from({ length: argsCount }, (_, i) => args[i].toString()).join(', ')
+                        logd(`[ ${++objc_method_local.count} ]\tcalled ${argsStr}`)
                     })
                     logd(`hooking ${this.address} -> ${this.sel}`)
                 } catch (error) {
@@ -115,7 +144,7 @@ class objc_method_local {
                     const srcCall = new NativeFunction(this.address, 'pointer', argsT) as IMPS
                     Interceptor.revert(this.address)
                     logz(`${this.sel} ${argsT}`)
-                    Interceptor.replace(this.address, new NativeCallback(function(...args){
+                    Interceptor.replace(this.address, new NativeCallback(function (...args) {
                         let ret = srcCall(...arguments)
                         const argsStr = args.map((i, c) => {
                             const il: NativePointer = i as NativePointer
@@ -132,11 +161,11 @@ class objc_method_local {
                 }
                 break
             case HK_TYPE.OBJC_REP:
-                const method = this.methodFHandle
+                const method: ObjC.ObjectMethod | undefined = this.methodFHandle
                 if (method == undefined) return loge(`${this.address} -> ${this.sel} | Error: methodFHandle is NULL`)
                 const old_impl = method.implementation as any
                 try {
-                    method.implementation = ObjC.implement(method, function (clazz: NativePointer, selector: NativePointer, ...args: any[]) {
+                    const new_impl = ObjC.implement(method, function (clazz: NativePointer, selector: NativePointer, ...args: any[]) {
                         const ret = old_impl(clazz, selector, ...args)
                         const argsStr = args.map((i, _c) => i as NativePointer).join(', ')
                         // const pk = getArgsAndRet(method as unknown as NativePointer)
@@ -148,21 +177,27 @@ class objc_method_local {
                         // }
                         return ret
                     })
-                    logd(`hooking ${this.address} -> ${this.sel}`)
+                    method.implementation = new_impl
+                    OC_Hook_Status.addNew(method, new_impl, old_impl)
+                    logd(`hooking OM:${method.handle} PTR:${old_impl} NEW:${new_impl} -> ${this.sel}`)
                 } catch (error) {
-                    loge(`hooking ${this.address} -> ${this.sel} | Error: ${error}`)
+                    loge(`hooking OM:${method.handle} PTR:${old_impl} -> ${this.sel} \nError: ${error}`)
                 }
                 break
             default:
                 throw new Error(`ERROR HookType`)
         }
     }
+
+    detachOC() {
+
+    }
 }
 
 declare global {
-
     var objc_method: typeof objc_method_local
-
+    var OC_Hook_Status: any
 }
 
 globalThis.objc_method = objc_method_local
+globalThis.OC_Hook_Status = OC_Hook_Status
