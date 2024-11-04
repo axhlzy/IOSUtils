@@ -1,4 +1,4 @@
-import { getArgsAndRet, packArgs } from "../oc.js"
+import { getArgsAndRet, packArgs, parseType } from "../oc.js"
 import { HK_TYPE } from "../../../../utils.js"
 
 // typedef struct objc_selector *SEL;
@@ -10,7 +10,7 @@ type id = NativePointer
 type IMP = (id: id, sel: SEL, ...args: NativePointer[]) => id
 type IMPS = (...args: NativePointer[]) => id
 
-export class OC_Hook_Status {
+export class OC_Hook_Status_IMPL {
 
     // global map save srcImpl to modifyImpl ptr
     static mapSrcToNewImpl: Map<NativePointer | ObjC.ObjectMethod, { newPtr: NativePointer, oldPtr: NativePointer }> = new Map()
@@ -30,11 +30,18 @@ export class OC_Hook_Status {
         OC_Hook_Status.mapSrcToNewImpl.set(objcMethod, { newPtr: newPtr, oldPtr: oldPtr })
     }
 
+    static has(objcMethod: NativePointer | ObjC.ObjectMethod) {
+        for (const [key, _value] of OC_Hook_Status.mapSrcToNewImpl) {
+            if ((key as ObjC.ObjectMethod).handle == objcMethod) return true
+        }
+        return false
+    }
+
     static disp() {
         let index: number = 0
         newLine()
         for (const [key, value] of OC_Hook_Status.mapSrcToNewImpl) {
-            let objM : ObjC.ObjectMethod = key as ObjC.ObjectMethod
+            let objM: ObjC.ObjectMethod = key as ObjC.ObjectMethod
             logd(`[${index++}] \tobjcMethod:${objM.handle} => { newPtr:${value.newPtr}, oldPtr:${value.oldPtr} }`)
         }
         newLine()
@@ -108,18 +115,18 @@ class objc_method_local {
     }
 
     static count: number = 0
-    public hook(hooktype: HK_TYPE = this.HookType, passPrivate: boolean = true, defaultArgsC: number = 6) {
+    public hook(hooktype: HK_TYPE = this.HookType, passPrivate: boolean = true, defaultArgsC: number = 6, force: boolean = false) {
+        if (!force) {
+            if (passPrivate && this.sel.startsWith('_')) {
+                logw(`hooking ${this.address} -> ${this.sel} | pass private method`)
+                return
+            }
 
-        if (passPrivate && this.sel.startsWith('_')) {
-            logw(`hooking ${this.address} -> ${this.sel} | pass private method`)
-            return
+            if (this.sel.includes("alloc") || this.sel.includes("description")) {
+                logw(`hooking ${this.address} -> ${this.sel} | pass filter method`)
+                return
+            }
         }
-
-        if (this.sel.includes("alloc") || this.sel.includes("description")) {
-            logw(`hooking ${this.address} -> ${this.sel} | pass filter method`)
-            return
-        }
-
         switch (hooktype) {
             case HK_TYPE.FRIDA_ATTACH:
                 const argsCount = this.argsCount
@@ -162,19 +169,39 @@ class objc_method_local {
                 break
             case HK_TYPE.OBJC_REP:
                 const method: ObjC.ObjectMethod | undefined = this.methodFHandle
-                if (method == undefined) return loge(`${this.address} -> ${this.sel} | Error: methodFHandle is NULL`)
+                if (method == undefined) {
+                    // return loge(`${this.address} -> ${this.sel} | Error: ObjMethod is NULL`)
+                    return loge(`${this.address} -> ${this.sel} | Error: already replaced`)
+                }
                 const old_impl = method.implementation as any
                 try {
                     const new_impl = ObjC.implement(method, function (clazz: NativePointer, selector: NativePointer, ...args: any[]) {
                         const ret = old_impl(clazz, selector, ...args)
                         const argsStr = args.map((i, _c) => i as NativePointer).join(', ')
-                        // const pk = getArgsAndRet(method as unknown as NativePointer)
+                        const pk = getArgsAndRet(method.handle)
                         logd(`[ ${++objc_method_local.count} ]\tcalled ${new ObjC.Object(clazz)} @ ${clazz}, ${ObjC.selectorAsString(selector)} ${argsStr}`)
-                        // todo
-                        // logz(`ret => ${packArgs(ret, pk.ret)}`)
-                        // for (let i=0;i<pk.args.length;i++){
-                        //     logz(`args[${i}]:${packArgs(args[i+2], pk.args[i+2])}`)
-                        // }
+                        const retType = parseType(pk.ret)
+                        if (retType != "void") {
+                            let extInfo: string = retType
+                            if (retType == "object") {
+                                const retObj = new ObjC.Object(ret)
+                                extInfo = `${retObj.$kind} of ${retObj.$className} @ ${retObj.$class.handle}`
+                            }
+                            logz(`retval  ${extInfo}\t${packArgs(ret, retType)}`)
+                        }
+                        for (let i = 0; i < pk.args.length - 2; i++) {
+                            try {
+                                const typeName = parseType(pk.args[i + 2])
+                                let extInfo: string = typeName
+                                if (typeName == "object") {
+                                    const obj = new ObjC.Object(args[i])
+                                    extInfo = `{ ${obj.$kind} of ${obj.$className} @ ${obj.$class.handle} }`
+                                }
+                                logz(`args[${i}] ${extInfo}\t${packArgs(args[i], typeName)}`)
+                            } catch (error) {
+                                loge(error)
+                            }
+                        }
                         return ret
                     })
                     method.implementation = new_impl
@@ -196,8 +223,8 @@ class objc_method_local {
 
 declare global {
     var objc_method: typeof objc_method_local
-    var OC_Hook_Status: any
+    var OC_Hook_Status: typeof OC_Hook_Status_IMPL
 }
 
 globalThis.objc_method = objc_method_local
-globalThis.OC_Hook_Status = OC_Hook_Status
+globalThis.OC_Hook_Status = OC_Hook_Status_IMPL

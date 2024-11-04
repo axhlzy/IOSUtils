@@ -186,7 +186,7 @@ const bytesToUTF8 = (data: any): string => {
 
 globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) => {
     const mPtr = checkPointer(ptr)
-    const obj = new ObjC.Object(mPtr)
+    const obj = new ObjC.Object(mPtr) // class handle
     if (obj.$kind != "instance") throw new Error("ivars | can only parse instance")
     showSuperClasses(obj.handle)
     const $clonedIvars: { [name: string]: any } = {}
@@ -214,6 +214,10 @@ globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) =>
         }
     }
     if (ret) return $clonedIvars
+
+    function extInfo(){
+
+    }
 }
 
 enum passValueKey {
@@ -370,6 +374,10 @@ globalThis.showAsm = (mPtr:NativePointer, len:number = 0x20) => {
     newLine()
 }
 
+globalThis.asOcObj = (mPtr:NativePointer | string) => {
+    return new ObjC.Object(ptr(mPtr as unknown as string))
+}
+
 declare global {
     var ProcessDispTask: any
     var clear: () => void
@@ -399,6 +407,8 @@ declare global {
     var nameToMethod: (name: string) => ObjC.ObjectMethod
 
     var showAsm : (mPtr:NativePointer, len?:number) => void
+
+    var asOcObj : (mPtr:NativePointer)=>ObjC.Object
 }
 
 export enum HK_TYPE {

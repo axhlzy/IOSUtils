@@ -1,5 +1,3 @@
-import { OC_Hook_Status } from "./types/objc_method.js"
-
 var cacheAllClass: ObjC.Object[] = []
 
 globalThis.cacheAllClass = cacheAllClass
@@ -58,16 +56,12 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                     const impl = method.implementation
                     const md = Process.findModuleByAddress(impl)
                     let extraDes: string = "-> "
-                    if (md != null) {
-                        try {
-                            // after objc.implement, An error will be triggered here.
-                            const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                            extraDes += `${rva} `
-                        } catch (error) {
-                            extraDes = ''
-                        }
-                    } else {
-                        extraDes += `${OC_Hook_Status.getNewImplFromOCMethod(method)} `
+                    try {
+                        // after objc.implement, An error will be triggered here.
+                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                        extraDes += `${rva} `
+                    } catch (error) {
+                        extraDes = ''
                     }
                     return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} ${extraDes} | ${m}`
                 } catch (error) {
@@ -77,16 +71,12 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                     const impl = call("method_getImplementation", method)
                     const md = Process.findModuleByAddress(impl)
                     let extraDes: string = "-> "
-                    if (md != null) {
-                        try {
-                            // after objc.implement, An error will be triggered here.
-                            const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                            extraDes += `${rva} `
-                        } catch (error) {
-                            extraDes = ''
-                        }
-                    } else {
-                        extraDes += `${OC_Hook_Status.getNewImplFromOCMethod(method)} `
+                    try {
+                        // after objc.implement, An error will be triggered here.
+                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+                        extraDes += `${rva} `
+                    } catch (error) {
+                        extraDes = ''
                     }
                     return `[ ${i} ]\t M: ${method} -> ${impl} ${extraDes}| ${m}`
                 }
@@ -292,13 +282,13 @@ globalThis.showMethod = (method: number | string | NativePointer, extName?: stri
     const implementation = call("method_getImplementation", localM) as NativePointer
     let extraDes: string
     try {
-        const md: Module | null = Process.findModuleByAddress(implementation)
+        const md: Module | null = Process.findModuleByAddress(implementation)!
         let rva: string = ''
-        if (md == null) {
-            rva = `${OC_Hook_Status.getNewImplFromOCMethod(localM)} [R]`
-        } else {
-            rva = `${implementation.sub(md.base!)}`
-        }
+        // if (md == null) {
+        //     rva = `${OC_Hook_Status.getNewImplFromOCMethod(localM)} [R]`
+        // } else {
+        rva = `${implementation.sub(md.base!)}`
+        // }
         extraDes = `| ${rva} `
         logd(`Implementation\t\t->\t${implementation} ${extraDes}`)
     } catch (error) {
@@ -316,12 +306,15 @@ globalThis.showMethod = (method: number | string | NativePointer, extName?: stri
 
 export const packArgs = (arg: NativePointer, type: string): string => {
     // todo
-    if (type == "string") return arg.readCString() == null ? "" : arg.readCString()!
-    if (type == "class") return new ObjC.Object(arg).toString()
-    if (type == "object") return new ObjC.Object(arg).toString()
-    if (type == "selector") return ObjC.selectorAsString(arg)
-    if (type == "void") return ''
-    else return arg.toString()
+    switch (type) {
+        case "string": return arg.readCString() == null ? "" : arg.readCString()!
+        case "class": return new ObjC.Object(arg).toString()
+        case "object": return new ObjC.Object(arg).toString()
+        case "selector": return ObjC.selectorAsString(arg)
+        case "bool": return `${arg} => ${new Boolean(arg).toString()}`
+        case "void": ''
+        default: return `${arg as unknown as NativePointer}`
+    }
 }
 
 export const getArgsAndRet = (method: NativePointer): { ret: string, args: Array<string> } => {
@@ -359,7 +352,7 @@ export const getArgsAndRet = (method: NativePointer): { ret: string, args: Array
  * @param toDisplay disp(default) or fridaType
  * @returns 
  */
-const parseType = (typeStr: string | null, toDisplay: boolean = true): string => {
+export const parseType = (typeStr: string | null, toDisplay: boolean = true): string => {
 
     const idByAlias: Record<string, string> = {
         'c': 'char',
@@ -475,7 +468,7 @@ declare global {
 
     var lookupMethod: (className: string, methodName: string) => NativePointer
 
-    var showSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
+    var showSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => void // get parent class name/handle 
     var getSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => Array<ObjC.Object>
     var showSubClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
 }
