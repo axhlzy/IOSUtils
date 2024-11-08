@@ -116,12 +116,12 @@ class objc_method_local {
 
     static count: number = 0
     public hook(hooktype: HK_TYPE = this.HookType, passPrivate: boolean = true, defaultArgsC: number = 6, force: boolean = false) {
+        // if ((hooktype == HK_TYPE.FRIDA_ATTACH || hooktype == HK_TYPE.FRIDA_REP) && !force) {
         if (!force) {
             if (passPrivate && this.sel.startsWith('_')) {
                 logw(`hooking ${this.address} -> ${this.sel} | pass private method`)
                 return
             }
-
             if (this.sel.includes("alloc") || this.sel.includes("description")) {
                 logw(`hooking ${this.address} -> ${this.sel} | pass filter method`)
                 return
@@ -206,9 +206,9 @@ class objc_method_local {
                     })
                     method.implementation = new_impl
                     OC_Hook_Status.addNew(method, new_impl, old_impl)
-                    logd(`hooking OM:${method.handle} PTR:${old_impl} NEW:${new_impl} -> ${this.sel}`)
+                    logg(`hooking objM:${method.handle} ptr:${old_impl} new:${new_impl} -> ${this.sel}`)
                 } catch (error) {
-                    loge(`hooking OM:${method.handle} PTR:${old_impl} -> ${this.sel} \nError: ${error}`)
+                    loge(`hooking objM:${method.handle} ptr:${old_impl} -> ${this.sel} \nError: ${error}`)
                 }
                 break
             default:

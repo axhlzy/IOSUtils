@@ -61,17 +61,6 @@ globalThis.dumpUI = () => {
     logd(ObjC.classes.UIWindow.keyWindow().recursiveDescription().toString())
 }
 
-globalThis.findSym = (filterName: string, exact: boolean = false, onlyFunction: boolean = false) => {
-    Process.enumerateModules()
-        .forEach(module => {
-            module.enumerateSymbols()
-                .filter(symbol => exact ? symbol.name == filterName : symbol.name.includes(filterName))
-                .filter(symbol => onlyFunction ? symbol.type == 'function' : true)
-                .filter(symbol => !symbol.address.isNull())
-                .forEach(symbol => logd(`${symbol.address} <= ${symbol.name}`))
-        })
-}
-
 globalThis.checkPointer = (ptr: NativePointer | number | string | ObjC.Object | ObjC.ObjectMethod, throwErr: boolean = true): NativePointer => {
     let mPtr: NativePointer = NULL
     if (typeof ptr === 'string') {
@@ -208,14 +197,14 @@ globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) =>
                     logd(`[${++index}] ${k}: | ${typeof v}`)
                     logz(`\t${$clonedIvars[k]}`)
                 }
-            }  
+            }
         } catch (error) {
-            
+
         }
     }
     if (ret) return $clonedIvars
 
-    function extInfo(){
+    function extInfo() {
 
     }
 }
@@ -312,7 +301,7 @@ const stk = (mPtr: NativePointer) => {
 
             Stalker.follow(Process.getCurrentThreadId(), {
                 events: {
-                    compile: true
+                    exec: true
                 },
                 onReceive: function (events) {
                     const bbs = Stalker.parse(events, {
@@ -341,7 +330,7 @@ globalThis.isObjcInstance = (mPtr: NativePointer): NativePointer => {
 }
 
 // +[UPWDeviceUtil deviceOSVersion] => {clsName, methodName}
-globalThis.nameToMethod = (method:string): ObjC.ObjectMethod=> {
+globalThis.nameToMethod = (method: string): ObjC.ObjectMethod => {
     if (method[1] == '[' && method.endsWith(']')) {
         let methodL = method.slice(2, -1)
         const parts = methodL.split(' ')
@@ -358,11 +347,11 @@ globalThis.addressToMethod = (mPtr: NativePointer): ObjC.ObjectMethod => {
     return nameToMethod(DebugSymbol.fromAddress(mPtr).name!)
 }
 
-globalThis.showAsm = (mPtr:NativePointer, len:number = 0x20) => {
+globalThis.showAsm = (mPtr: NativePointer, len: number = 0x20) => {
     const l_mPtr = checkPointer(mPtr)
-    let next :NativePointer = l_mPtr
+    let next: NativePointer = l_mPtr
     newLine()
-    while (len-- > 0){
+    while (len-- > 0) {
         try {
             const ins = Instruction.parse(next)
             logd(`${ins.address} ${ins.mnemonic} ${ins.opStr}`)
@@ -374,15 +363,85 @@ globalThis.showAsm = (mPtr:NativePointer, len:number = 0x20) => {
     newLine()
 }
 
-globalThis.asOcObj = (mPtr:NativePointer | string) => {
+globalThis.asOcObj = (mPtr: NativePointer | string) => {
     return new ObjC.Object(ptr(mPtr as unknown as string))
+}
+
+globalThis.demangleName = (expName: string): string => {
+    // DebugSymbol.fromName("__cxa_demangle")
+    const demangleAddress: NativePointer | null = Module.findExportByName(null, '__cxa_demangle')
+    if (demangleAddress == null) throw Error("can not find export function -> __cxa_demangle")
+    const demangle: Function = new NativeFunction(demangleAddress, 'pointer', ['pointer', 'pointer', 'pointer', 'pointer'])
+    const mangledName: NativePointer = Memory.allocUtf8String(expName)
+    const outputBuffer: NativePointer = NULL
+    const length: NativePointer = NULL
+    const status: NativePointer = Memory.alloc(Process.pageSize)
+    const result: NativePointer = demangle(mangledName, outputBuffer, length, status) as NativePointer
+    if (status.readInt() === 0) {
+        let resultStr: string | null = result.readUtf8String()
+        return (resultStr == null || resultStr == expName) ? "" : resultStr
+    } else return ""
+}
+
+globalThis.getSym = (filterName: string, mdName?: string): ModuleSymbolDetails[] | undefined => {
+    if (mdName == undefined) {
+        return Process.enumerateModules()
+            .flatMap(module => module.enumerateSymbols())
+            .filter(item => item.name.includes(filterName) || demangleName(item.name).includes(filterName))
+    } else {
+        const module = Process.findModuleByName(mdName)
+        if (!module) {
+            logw(`Module '${mdName}' not found...`)
+            return undefined
+        }
+        return module.enumerateSymbols()
+            .filter(item => item.name.includes(filterName) || demangleName(item.name).includes(filterName))
+    }
+}
+
+globalThis.findSym = (filterName: string, imageName: string = "", onlyFunction: boolean = false) => {
+    if (filterName == undefined) throw new Error('filterName can not be null ...')
+    newLine()
+    if (imageName != undefined && imageName.length > 0) {
+        if (imageName.includes('*')) {
+            Process.enumerateModules().filter(item => item.name.includes(imageName.replace('*', ''))).forEach(i => (iteratorName(i)))
+        } else {
+            iteratorName(Process.findModuleByName(imageName))
+        }
+    } else if (imageName != undefined && imageName != "") {
+        iteratorName(Process.findModuleByName(imageName))
+    } else {
+        Process.enumerateModules().forEach(iteratorName)
+    }
+
+    function iteratorName(md: Module | null) {
+        if (md == null) throw new Error('Module can not be null ...')
+        const syms = md.enumerateSymbols()
+        const filterSyms = syms.map(item => { return { msd: item, demangeName: demangleName(item.name), rva: item.address.sub(md.base) } })
+            .filter(item => item.demangeName.includes(filterName) || item.msd.name.includes(filterName))
+            .filter(item => onlyFunction ? item.msd.type == 'function' : true)
+            .filter(item => !item.msd.address.isNull())
+        if (filterSyms.length == 0) return
+        logw(`Found { ${filterSyms.length} / ${syms.length} } in '${md.path}'\n`)
+        filterSyms.forEach((item, index) => {
+            logd(`[${index}] \t${item.msd.address} -> \t${item.msd.name}`)
+            if (item.demangeName.length != 0) logz(`\t\t\t${item.demangeName} | ${item.rva}`)
+        })
+        newLine()
+    }
+}
+
+globalThis.sleep = (sec: number) => new NativeFunction(DebugSymbol.fromName("sleep").address, 'pointer', ['int'])(sec)
+
+const _getAddr__mod_init_func = (sectionName:string="__mod_init_func", moduleName:string =Process.mainModule.name) => {
+    return Process.getModuleByName(moduleName).enumerateSections().find(item => item.name.includes(sectionName))
 }
 
 declare global {
     var ProcessDispTask: any
     var clear: () => void
     var cls: () => void // alias for clear
-    var findSym: (filterName: string, exact?: boolean, onlyFunction?: boolean) => void
+    var findSym: (filterName: string, imageName?: string, onlyFunction?: boolean) => void
     var hex: (ptr: NativePointer | string | number, len?: number) => void
     var checkPointer: (ptr: NativePointer | number | string | ObjC.Object | ObjC.ObjectMethod, throwErr?: boolean) => NativePointer
     var allocOCString: (str: string) => ObjC.Object
@@ -406,9 +465,14 @@ declare global {
     var addressToMethod: (mPtr: NativePointer) => ObjC.ObjectMethod
     var nameToMethod: (name: string) => ObjC.ObjectMethod
 
-    var showAsm : (mPtr:NativePointer, len?:number) => void
+    var showAsm: (mPtr: NativePointer, len?: number) => void
 
-    var asOcObj : (mPtr:NativePointer)=>ObjC.Object
+    var asOcObj: (mPtr: NativePointer) => ObjC.Object
+    var demangleName: (expName: string) => string
+
+    var getSym: (filterName: string, mdName?: string) => ModuleSymbolDetails[] | undefined
+
+    var sleep: (sec: number) => void
 }
 
 export enum HK_TYPE {

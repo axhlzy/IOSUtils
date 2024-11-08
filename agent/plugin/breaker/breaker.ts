@@ -47,20 +47,22 @@ class Breaker {
         })
     }
 
-    public static attachMethodsByFilter(filterName: string, filterClass: string, type: ApiResolverType = "objc") {
+    public static attachMethodsByFilter(filterName: string, filterClass: string = '', type: ApiResolverType = "objc") {
         if (filterName == undefined || filterName.length == 0) throw new Error('Need args[0] filterStr: string')
         let filter: string = filterName
-        if (filterClass != undefined && !filterName.includes("[")) {
+        if (filterClass != undefined && filterClass != '' && !filterName.includes("[")) {
             filter = `*[${filterClass} *${filterName}*]`
         } else if (!filterName.includes("[")) {
             filter = `*[* *${filterName}*]`
         }
-        new ApiResolver(type).enumerateMatches(filter).forEach(item => {
-            logd(item.address + ' -> ' + item.name)
+        new ApiResolver(type).enumerateMatches(filter).forEach((item, index) => {
             try {
-                Breaker.attachImpl(item.name)
+                const method = addressToMethod(item.address)
+                const md = Process.findModuleByAddress(item.address)
+                logd(`[${index}] \taddr:${item.address} offset:${md?.name}@${item.address.sub(md?.base!)} ${item.name} ObjM:${method.handle}`)
+                Breaker.attachMethod(method.handle)
             } catch (error) {
-                loge(error)
+                loge(`${item.address} ${error}`)
             }
         })
     }
@@ -70,7 +72,7 @@ declare global {
     var B: (mPtr: NativePointer | number | string | ObjC.Object, filter?: string) => void
     var b: (mPtr: NativePointer | number | string) => void
 
-    var BF: (filterStr: string, type: ApiResolverType) => void
+    var BF: (fMethodName:string , filterClass?: string, type?: ApiResolverType) => void
 }
 
 globalThis.b = (mPtr: NativePointer | number | string) => { Breaker.attachMethod(mPtr, true) }
