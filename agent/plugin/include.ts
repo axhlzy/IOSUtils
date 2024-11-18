@@ -1,5 +1,6 @@
 import "./cipher/cipher.js"
 
+import './info/include.js'
 import './foundation/include.js'
 import './jailbreak/include.js'
 import './service/include.js'
