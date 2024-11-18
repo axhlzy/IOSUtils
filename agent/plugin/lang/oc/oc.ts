@@ -455,6 +455,33 @@ const watch_getClass = () => {
     // OBJC_EXPORT void objc_setHook_getClass(objc_hook_getClass _Nonnull newValue, objc_hook_getClass _Nullable * _Nonnull outOldValue)
 }
 
+globalThis.printDictionary = (dictionary: ObjC.Object | NativePointer)=> {
+    let dis: ObjC.Object
+    if (dictionary instanceof NativePointer) dis = new ObjC.Object(dictionary)
+    else if (dictionary instanceof ObjC.Object) dis = dictionary
+    else throw new Error('Error dictionary(args[0]), Need ObjC.Object or NativePointer')
+    const keys = dis.allKeys()
+    for (let i = 0; i < keys.count(); i++) {
+        const key = keys.objectAtIndex_(i)
+        const value = dis.objectForKey_(key)
+        logd(`Key: ${key.toString()}, Value: ${value.toString()}`)
+    }
+}
+
+globalThis.printArray = (array: ObjC.Object | NativePointer) => {
+    let arr: ObjC.Object
+    if (array instanceof NativePointer) arr = new ObjC.Object(array)
+    else if (array instanceof ObjC.Object) arr = array
+    else throw new Error('Error array(args[0]), Need ObjC.Object or NativePointer')
+    const count = arr.count()
+    if (count == 0) loge('Null array')
+    for (let i = 0; i < count; i++) {
+        const value = arr.objectAtIndex_(i)
+        logd(`Index: ${i}, Value: ${value.toString()}`)
+    }
+}
+
+
 declare global {
     var cacheAllClass: ObjC.Object[]
     var showMethods: (clsNameOrPtr: number | string | NativePointer, filter?: string, includeParent?: boolean) => void
@@ -471,6 +498,9 @@ declare global {
     var showSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => void // get parent class name/handle 
     var getSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => Array<ObjC.Object>
     var showSubClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
+
+    var printDictionary: (dictionary: ObjC.Object | NativePointer)=>void
+    var printArray: (array: ObjC.Object | NativePointer) => void
 }
 
 

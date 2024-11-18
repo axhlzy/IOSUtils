@@ -80,20 +80,12 @@ globalThis.hook_dyld_mod_init_funcs = (offset?: NativePointer | number) => {
         logd("nop call 'KSAdSDK!registerDyldCallback'")
     }, "void", [])
 
+    // var first = true
 
     A(offset != undefined ? offset : findOffset(), (_args, ctx) => {
         const x24L = (ctx as Arm64CpuContext).x24
         const debuginfo = DebugSymbol.fromAddress(x24L).toString()
         logd(`call init -> ${x24L} | ${debuginfo}`)
-
-        // {
-        //     let ins = Instruction.parse(x24L)
-        //     for (let i = 0; i < 500; i++) {
-        //         if (i == 0 || i == 499) logw(ins)
-        //         if (ins.toString().includes('svc')) loge(`Found SVC ${ins.address} ${ins}`)
-        //         ins = Instruction.parse(ins.next)
-        //     }
-        // }
 
         // if (debuginfo.includes("KSAdSDK!registerDyldCallback")) {
         //     (ctx as Arm64CpuContext).x24 = nopCall
@@ -101,7 +93,11 @@ globalThis.hook_dyld_mod_init_funcs = (offset?: NativePointer | number) => {
 
         // A(x24L, (args)=>{logz(`Enter ${x24L}`)}, (ret)=>{logz(`Leave ${x24L}`)})
 
-        // if(!debuginfo.includes("UnityFramework")) return
+        // if(debuginfo.includes("MinShengCreditCard") && first) {
+        //     first = false
+        //     nopSysCall("MinShengCreditCard",true)
+        // }
+
         // Interceptor.attach(x24L, {
         //     onEnter(args) {
         //         logz(`Enter ${x24L}`)
