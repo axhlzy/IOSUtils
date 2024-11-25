@@ -63,7 +63,7 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                     } catch (error) {
                         extraDes = ''
                     }
-                    return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} ${extraDes} | ${m}`
+                    return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} ${extraDes}\t| ${m}`
                 } catch (error) {
                     // instance methods
                     const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
@@ -78,7 +78,7 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                     } catch (error) {
                         extraDes = ''
                     }
-                    return `[ ${i} ]\t M: ${method} -> ${impl} ${extraDes}| ${m}`
+                    return `[ ${i} ]\t M: ${method} -> ${impl} ${extraDes}\t| ${m}`
                 }
             })
             .forEach((item, i) => item.includes(' _') ? logz(item) : logd(item))

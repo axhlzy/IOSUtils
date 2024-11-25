@@ -6,7 +6,12 @@ globalThis.hook_dlopen = (onCall?:(name:string)=>void, printBackTrace:boolean=fa
             pv.set("msg", `dlopen ( ${args[0]} ${name}, ${args[1]} )`)
             if (printBackTrace) logw('dlopen called from:\n' + Thread.backtrace(ctx, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n') + '\n')
         },(retval, _ctx, pv)=>{
-            logd(`${retval} = ${pv.get("msg")}`)
+            const msg = `${pv.get("msg")}`
+            logd(`${retval} = ${msg}`)
+            if (msg.includes("UnityFramework")){
+                saveModule("UnityFramework")
+                sleep(100)
+            }
         }
     )
 }

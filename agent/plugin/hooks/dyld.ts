@@ -43,6 +43,8 @@ globalThis.hook_dyld_get_image_name = () => {
 // hook __mod_init_funcs
 globalThis.hook_dyld_mod_init_funcs = (offset?: NativePointer | number) => {
 
+    logd("called hook_dyld_mod_init_funcs")
+
     // src/ImageLoaderMachO.cpp
     // void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
     // func(context.argc, context.argv, context.envp, context.apple, &context.programVars);
@@ -90,6 +92,10 @@ globalThis.hook_dyld_mod_init_funcs = (offset?: NativePointer | number) => {
         // if (debuginfo.includes("KSAdSDK!registerDyldCallback")) {
         //     (ctx as Arm64CpuContext).x24 = nopCall
         // }
+
+        if (debuginfo.includes("Unity")) {
+            sleep(100)
+        }
 
         // A(x24L, (args)=>{logz(`Enter ${x24L}`)}, (ret)=>{logz(`Leave ${x24L}`)})
 

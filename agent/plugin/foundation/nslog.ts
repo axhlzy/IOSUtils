@@ -16,6 +16,14 @@ const B_NSLOG = () => {
             logd(`NSLog: ${fmt} | ${args_str}`)
         }
     })
+
+    // if NSLog not working, enable this ↓
+    // Interceptor.attach(Module.findExportByName("Foundation", "NSLogv")!, {
+    //     onEnter: function(args) {
+    //         logd("[*] NSLogv was called")
+    //         logd(new ObjC.Object(args[0]))
+    //     }
+    // })
 }
 
 declare global {

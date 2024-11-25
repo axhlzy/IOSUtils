@@ -433,8 +433,32 @@ globalThis.findSym = (filterName: string, imageName: string = "", onlyFunction: 
 
 globalThis.sleep = (sec: number) => new NativeFunction(DebugSymbol.fromName("sleep").address, 'pointer', ['int'])(sec)
 
-const _getAddr__mod_init_func = (sectionName:string="__mod_init_func", moduleName:string =Process.mainModule.name) => {
+const _getAddr__mod_init_func = (sectionName: string = "__mod_init_func", moduleName: string = Process.mainModule.name) => {
     return Process.getModuleByName(moduleName).enumerateSections().find(item => item.name.includes(sectionName))
+}
+
+globalThis.saveFile = (start: number | NativePointer, size: number, fileName: string = `/tmp/${Date.now()}`) => {
+    if (start == null || start ==undefined || start == 0 ) throw new Error("start Address can not be null")
+    if (size == null || size ==undefined || size == 0 ) throw new Error("size can not be null")
+    const file = new File(fileName, "wb")
+    const startPtr = start instanceof NativePointer ? start : ptr(start)
+    file.write(startPtr.readByteArray(size)!)
+    logd(`MEM ${start} -> ${size} has been saved to ${fileName}`);
+}
+
+globalThis.saveModule = (mdName: string) => {
+    if (mdName == null || mdName ==undefined || mdName.length == 0 ) throw new Error("mdName can not be null")
+    const module = Process.findModuleByName(mdName)
+    if (module == null) throw new Error("Module not found")
+    saveFile(module.base, module.size, `/tmp/${module.name}`)
+}
+
+globalThis.listModules = (filterName:string) =>{
+    if (filterName == undefined) {
+        Process.enumerateModules().forEach(item=>logd(JSON.stringify(item)))
+    } else {
+        Process.enumerateModules().filter(i=>i.name.includes(filterName)).forEach(item=>logd(JSON.stringify(item))) 
+    }
 }
 
 declare global {
@@ -473,6 +497,10 @@ declare global {
     var getSym: (filterName: string, mdName?: string) => ModuleSymbolDetails[] | undefined
 
     var sleep: (sec: number) => void
+
+    var saveFile: (start: number | NativePointer, size: number, fileName?: string) => void
+    var saveModule: (mdName: string) => void
+    var listModules: (filterName: string) => void
 }
 
 export enum HK_TYPE {

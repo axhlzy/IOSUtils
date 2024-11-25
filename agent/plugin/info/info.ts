@@ -11,33 +11,33 @@ function app_meta_info(DEBUG: boolean) {
     console.warn("--------------------------------")
     console.warn("|     App Meta Information     |")
     console.warn("--------------------------------")
-    try { console.log("Bundle Name: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleName").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Display Name: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleDisplayName").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Executable Name: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleExecutable").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Bundle Identifier: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleIdentifier").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Info Dictionary Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleInfoDictionaryVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Numeric Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleNumericVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Short Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleShortVersionString").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Bundle Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Minimum OS Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("MinimumOSVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Bundle Package Type: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundlePackageType").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("BuildMachineOSBuild: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("BuildMachineOSBuild").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("Development Region: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleDevelopmentRegion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("iPhone Environment Required: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("LSRequiresIPhoneOS").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
+    try { console.log("Bundle Name: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleName").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Display Name: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleDisplayName").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Executable Name: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleExecutable").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Bundle Identifier: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleIdentifier").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Info Dictionary Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleInfoDictionaryVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Numeric Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleNumericVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Short Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleShortVersionString").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Bundle Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Minimum OS Version: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("MinimumOSVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Bundle Package Type: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundlePackageType").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("BuildMachineOSBuild: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("BuildMachineOSBuild").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("Development Region: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleDevelopmentRegion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("iPhone Environment Required: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("LSRequiresIPhoneOS").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
 }
 function xcode_build_meta_info(DEBUG: boolean) {
     console.log("")
     console.warn("--------------------------------")
     console.warn("| Xcode Build Meta Information |")
     console.warn("--------------------------------")
-    try { console.log("DTCompiler: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTCompiler").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("DTPlatformBuild: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTPlatformBuild").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("DTPlatformName: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTPlatformName").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("DTPlatformVersion: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTPlatformVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("DTSDKBuild: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTSDKBuild").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("DTSDKName: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTSDKName").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("DTXcode: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTXcode").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
-    try { console.log("DTXcodeBuild: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTXcodeBuild").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
+    try { console.log("DTCompiler: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTCompiler").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("DTPlatformBuild: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTPlatformBuild").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("DTPlatformName: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTPlatformName").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("DTPlatformVersion: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTPlatformVersion").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("DTSDKBuild: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTSDKBuild").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("DTSDKName: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTSDKName").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("DTXcode: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTXcode").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
+    try { console.log("DTXcodeBuild: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("DTXcodeBuild").toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
     //try { console.log("NSAppTransportSecurity: " + ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("NSAppTransportSecurity").toString())
 }
 function app_env_info(DEBUG: boolean) {
@@ -50,23 +50,23 @@ function app_env_info(DEBUG: boolean) {
     mainBundlePath = mainBundlePath.substring(mainBundlePath.indexOf("<") + 1)
     console.log("App Bundle Path    : " + mainBundlePath)
     //Credit: https://github.com/iddoeldor/frida-snippets#find-ios-application-uuid
-    var mainBundleContainerPathIdentifier = "";
-    var bundleIdentifier = String(ObjC.classes.NSBundle.mainBundle().objectForInfoDictionaryKey_('CFBundleIdentifier'));
-    var path_prefix = "/var/mobile/Containers/Data/Application/";
-    var plist_metadata = "/.com.apple.mobile_container_manager.metadata.plist";
-    var folders = ObjC.classes.NSFileManager.defaultManager().contentsOfDirectoryAtPath_error_(path_prefix, NULL);
+    var mainBundleContainerPathIdentifier = ""
+    var bundleIdentifier = String(ObjC.classes.NSBundle.mainBundle().objectForInfoDictionaryKey_('CFBundleIdentifier'))
+    var path_prefix = "/var/mobile/Containers/Data/Application/"
+    var plist_metadata = "/.com.apple.mobile_container_manager.metadata.plist"
+    var folders = ObjC.classes.NSFileManager.defaultManager().contentsOfDirectoryAtPath_error_(path_prefix, NULL)
     for (var i = 0, l = folders.count(); i < l; i++) {
-        var uuid = folders.objectAtIndex_(i);
-        var metadata = path_prefix + uuid + plist_metadata;
-        var dict = ObjC.classes.NSMutableDictionary.alloc().initWithContentsOfFile_(metadata);
-        var enumerator = dict.keyEnumerator();
-        var key;
+        var uuid = folders.objectAtIndex_(i)
+        var metadata = path_prefix + uuid + plist_metadata
+        var dict = ObjC.classes.NSMutableDictionary.alloc().initWithContentsOfFile_(metadata)
+        var enumerator = dict.keyEnumerator()
+        var key
         while ((key = enumerator.nextObject()) !== null) {
             if (key == 'MCMMetadataIdentifier') {
-                var appId = String(dict.objectForKey_(key));
+                var appId = String(dict.objectForKey_(key))
                 if (appId.indexOf(bundleIdentifier) != -1) {
-                    mainBundleContainerPathIdentifier = uuid;
-                    break;
+                    mainBundleContainerPathIdentifier = uuid
+                    break
                 }
             }
         }
@@ -78,48 +78,48 @@ function raw_app_info_plist(DEBUG: boolean) {
     console.warn("--------------------------------")
     console.warn("|  Raw Contents of Info.plist  |")
     console.warn("--------------------------------")
-    try { console.log(ObjC.classes.NSBundle.mainBundle().infoDictionary().toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err); } }
+    try { console.log(ObjC.classes.NSBundle.mainBundle().infoDictionary().toString()) } catch (err) { if (DEBUG) { console.error("[!] Error: " + err) } }
 }
 function show_url_scheme(DEBUG: boolean) {
     console.log("")
     console.warn("--------------------------------")
     console.warn("|         URL Schemes          |")
     console.warn("--------------------------------")
-    var nsDictionary = ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleURLTypes");
+    var nsDictionary = ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleURLTypes")
     if (nsDictionary == null) {
         console.log("[*] URL scheme not defined by app")
-        return;
+        return
     }
-    nsDictionary = nsDictionary.objectAtIndex_(0);
-    var dictKeys = nsDictionary.allKeys();
+    nsDictionary = nsDictionary.objectAtIndex_(0)
+    var dictKeys = nsDictionary.allKeys()
     for (var i = 0; i < dictKeys.count(); i++) {
         if (dictKeys.objectAtIndex_(i) == "CFBundleURLSchemes") {
-            var urlSchemesString = "";
-            var nsArray = nsDictionary.objectForKey_("CFBundleURLSchemes");
+            var urlSchemesString = ""
+            var nsArray = nsDictionary.objectForKey_("CFBundleURLSchemes")
             for (var i = 0; i < nsArray.count(); i++) {
-                urlSchemesString = urlSchemesString + nsArray.objectAtIndex_(i).toString() + ", ";
+                urlSchemesString = urlSchemesString + nsArray.objectAtIndex_(i).toString() + ", "
             }
             urlSchemesString = urlSchemesString.substr(0, urlSchemesString.length - 2)
             console.log("URL Schemes : " + urlSchemesString)
         }
         else if (dictKeys.objectAtIndex_(i) == "CFBundleURLName") {
-            var key = dictKeys.objectAtIndex_(i);
-            var value = nsDictionary.objectForKey_(key);
+            var key = dictKeys.objectAtIndex_(i)
+            var value = nsDictionary.objectForKey_(key)
             console.log("URL Scheme Name : " + value)
         }
         else if (dictKeys.objectAtIndex_(i) == "CFBundleURLIconFile") {
-            var key = dictKeys.objectAtIndex_(i);
-            var value = nsDictionary.objectForKey_(key);
+            var key = dictKeys.objectAtIndex_(i)
+            var value = nsDictionary.objectForKey_(key)
             console.log("URL Icon File : " + value)
         }
         else if (dictKeys.objectAtIndex_(i) == "CFBundleTypeRole") {
-            var key = dictKeys.objectAtIndex_(i);
-            var value = nsDictionary.objectForKey_(key);
+            var key = dictKeys.objectAtIndex_(i)
+            var value = nsDictionary.objectForKey_(key)
             console.log("App's Role : " + value)
         }
         else {
-            var key = dictKeys.objectAtIndex_(i);
-            var value = nsDictionary.objectForKey_(key);
+            var key = dictKeys.objectAtIndex_(i)
+            var value = nsDictionary.objectForKey_(key)
             console.log(key + " : " + value)
         }
 
@@ -131,7 +131,7 @@ function protected_resources_permissions(DEBUG: boolean) {
     console.warn("|Protected Resources / Permissions|")
     console.warn("-----------------------------------")
     console.warn("Source: https://developer.apple.com/documentation/bundleresources/information_property_list/protected_resources")
-    var dictKeys = ObjC.classes.NSBundle.mainBundle().infoDictionary().allKeys();
+    var dictKeys = ObjC.classes.NSBundle.mainBundle().infoDictionary().allKeys()
     var permissionListArray = ["NSBluetoothAlwaysUsageDescription", "NSBluetoothPeripheralUsageDescription", "NSCalendarsUsageDescription", "NSRemindersUsageDescription", "NSCameraUsageDescription", "NSMicrophoneUsageDescription", "NSContactsUsageDescription", "NSFaceIDUsageDescription", "NSDesktopFolderUsageDescription", "NSDocumentsFolderUsageDescription", "NSDownloadsFolderUsageDescription", "NSNetworkVolumesUsageDescription", "NSRemovableVolumesUsageDescription", "NSFileProviderPresenceUsageDescription", "NSFileProviderDomainUsageDescription", "NSHealthClinicalHealthRecordsShareUsageDescription", "NSHealthShareUsageDescription", "NSHealthUpdateUsageDescription", "NSHealthRequiredReadAuthorizationTypeIdentifiers", "NSHomeKitUsageDescription", "NSLocationAlwaysAndWhenInUseUsageDescription", "NSLocationUsageDescription", "NSLocationWhenInUseUsageDescription", "NSLocationAlwaysUsageDescription", "NSAppleMusicUsageDescription", "NSMotionUsageDescription", "NFCReaderUsageDescription", "NSPhotoLibraryAddUsageDescription", "NSPhotoLibraryUsageDescription", "NSAppleScriptEnabled", "NSAppleEventsUsageDescription", "NSSystemAdministrationUsageDescription", "ITSAppUsesNonExemptEncryption", "ITSEncryptionExportComplianceCode", "NSSiriUsageDescription", "NSSpeechRecognitionUsageDescription", "NSVideoSubscriberAccountUsageDescription", "UIRequiresPersistentWiFi"]
     var permissionListNameDict = {
         "NSBluetoothAlwaysUsageDescription": "Privacy - Bluetooth Always Usage Description",
@@ -172,7 +172,7 @@ function protected_resources_permissions(DEBUG: boolean) {
         "NSSpeechRecognitionUsageDescription": "Privacy - Speech Recognition Usage Description",
         "NSVideoSubscriberAccountUsageDescription": "Privacy - Video Subscriber Account Usage Description",
         "UIRequiresPersistentWiFi": "Application uses Wi-Fi"
-    };
+    }
     var permissionListDetailDict = {
         "NSBluetoothAlwaysUsageDescription": "A message that tells the user why the app needs access to Bluetooth",
         "NSBluetoothPeripheralUsageDescription": "A message that tells the user why the app is requesting the ability to connect to Bluetooth peripherals",
@@ -241,7 +241,7 @@ function app_transport_security(DEBUG: boolean) {
         console.log("[*] Issue: Found 'NSAppTransportSecurity' defined in Info.plist file")
         console.log("[*] Detail: A description of changes made to the default security for HTTP connections")
         console.log("")
-        var atsDictKeys = ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("NSAppTransportSecurity").allKeys();
+        var atsDictKeys = ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("NSAppTransportSecurity").allKeys()
         for (var i = 0; i < atsDictKeys.count(); i++) {
             if (atsDictKeys.objectAtIndex_(i) == "NSAllowsArbitraryLoads") {
                 if (ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("NSAppTransportSecurity").objectForKey_("NSAllowsArbitraryLoads").toString() == "1") {
@@ -279,11 +279,11 @@ function app_transport_security(DEBUG: boolean) {
                 console.log("[*] Issue: Found 'NSExceptionDomains' defined inside 'NSAppTransportSecurity' in Info.plist file")
                 console.log("[*] Detail: Custom configurations for App Transport Security named domains")
                 console.log("")
-                /*var atsExceptionDomainsDict = ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("NSAppTransportSecurity").objectForKey_("NSExceptionDomains");
-                var atsExceptionDomainsDictKeys = ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("NSAppTransportSecurity").objectForKey_("NSExceptionDomains").allKeys();
+                /*var atsExceptionDomainsDict = ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("NSAppTransportSecurity").objectForKey_("NSExceptionDomains")
+                var atsExceptionDomainsDictKeys = ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("NSAppTransportSecurity").objectForKey_("NSExceptionDomains").allKeys()
                 for( var i = 0; i<atsExceptionDomainsDictKeys.count(); i++)
                 {
-                    console.log("Domain Name : " + atsExceptionDomainsDict);
+                    console.log("Domain Name : " + atsExceptionDomainsDict)
                     if(ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("NSAppTransportSecurity").objectForKey_("NSAllowsArbitraryLoads").toString() == "1")
                     {
                         console.log("[*] Issue: ")
@@ -304,12 +304,12 @@ function classes_potential_jailbreak_detection(DEBUG: boolean) {
     console.warn("---------------------------------------------")
     for (var className in ObjC.classes) {
         if (ObjC.classes.hasOwnProperty(className)) {
-            var classNameLower = className.toLowerCase();
+            var classNameLower = className.toLowerCase()
             if (classNameLower.indexOf("jailbreak") != -1 || classNameLower.indexOf("jailbroke") != -1) {
-                console.log(className);
-                var methods = ObjC.classes[className].$ownMethods;
+                console.log(className)
+                var methods = ObjC.classes[className].$ownMethods
                 for (var i = 0; i < methods.length; i++) {
-                    console.log("\t" + methods[i]);
+                    console.log("\t" + methods[i])
                 }
                 console.log("")
             }
@@ -322,29 +322,29 @@ function methods_potential_jailbreak_detection(DEBUG: boolean) {
     console.warn("---------------------------------------------")
     console.warn("| Methods for potential jailbreak detection |")
     console.warn("---------------------------------------------")
-    
-    new ApiResolver("objc").enumerateMatches("*[* *JailBreak*]").forEach(i=>LOGJSON(i))
-    
-    new ApiResolver("objc").enumerateMatches("*[* *jailBreak*]").forEach(i=>LOGJSON(i))
 
-    new ApiResolver("objc").enumerateMatches("*[* *jailbreak*]").forEach(i=>LOGJSON(i))
+    new ApiResolver("objc").enumerateMatches("*[* *JailBreak*]").forEach(i => LOGJSON(i))
 
-    new ApiResolver("objc").enumerateMatches("*[* *jailbroke*]").forEach(i=>LOGJSON(i))
+    new ApiResolver("objc").enumerateMatches("*[* *jailBreak*]").forEach(i => LOGJSON(i))
+
+    new ApiResolver("objc").enumerateMatches("*[* *jailbreak*]").forEach(i => LOGJSON(i))
+
+    new ApiResolver("objc").enumerateMatches("*[* *jailbroke*]").forEach(i => LOGJSON(i))
 
     // for (var className in ObjC.classes) {
     //     if (ObjC.classes.hasOwnProperty(className)) {
-    //         var foundMethods = [];
-    //         var j = 0;
-    //         var methods = ObjC.classes[className].$ownMethods;
+    //         var foundMethods = []
+    //         var j = 0
+    //         var methods = ObjC.classes[className].$ownMethods
     //         for (var i = 0; i < methods.length; i++) {
-    //             var methodNameLowerCase = methods[i].toLowerCase();
+    //             var methodNameLowerCase = methods[i].toLowerCase()
     //             if (methodNameLowerCase.indexOf("jailbreak") != -1 || methodNameLowerCase.indexOf("jailbroke") != -1) {
-    //                 foundMethods[j] = methods[i];
-    //                 j++;
+    //                 foundMethods[j] = methods[i]
+    //                 j++
     //             }
     //         }
     //         if (foundMethods.length > 0) {
-    //             console.log(className);
+    //             console.log(className)
     //             for (var i = 0; i < foundMethods.length; i++) {
     //                 console.log("\t" + foundMethods[i])
     //             }
@@ -356,6 +356,7 @@ function methods_potential_jailbreak_detection(DEBUG: boolean) {
 
 declare global {
     var showInfo: () => void
+    var show_binarycookies: () => void
 }
 
 globalThis.showInfo = () => {
@@ -368,4 +369,13 @@ globalThis.showInfo = () => {
     setImmediate(app_transport_security)
     setImmediate(classes_potential_jailbreak_detection)
     setImmediate(methods_potential_jailbreak_detection)
+}
+
+//Twitter: https://twitter.com/xploresec
+//GitHub: https://github.com/interference-security
+globalThis.show_binarycookies = () => {
+    const cookies = ObjC.classes.NSHTTPCookieStorage.sharedHTTPCookieStorage().cookies()
+    for (let i = 0; i < cookies.count(); i++) {
+        console.log((cookies['- objectAtIndex:'](i)).toString())
+    }
 }
