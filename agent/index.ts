@@ -11,9 +11,9 @@ import './logger.js'
 // hook_dlopen()
 // hook_load_images()
 // hook_getenv()
-hook_initialize()
-hook_load()
-hook_dispatch()
+// hook_initialize()
+// hook_load()
+// hook_dispatch()
 
 // B("UPWDeviceUtil")
 // -m "*[* *canOpenURL*]"

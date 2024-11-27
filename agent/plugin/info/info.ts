@@ -355,20 +355,22 @@ function methods_potential_jailbreak_detection(DEBUG: boolean) {
 }
 
 declare global {
-    var showInfo: () => void
+    var showInfo: (jailbreak?: boolean) => void
     var show_binarycookies: () => void
 }
 
-globalThis.showInfo = () => {
+globalThis.showInfo = (jailbreak: boolean = false) => {
     setImmediate(app_meta_info)
     setImmediate(xcode_build_meta_info)
     setImmediate(app_env_info)
     setImmediate(raw_app_info_plist)
-    setImmediate(show_url_scheme)
+    // setImmediate(show_url_scheme)
     setImmediate(protected_resources_permissions)
     setImmediate(app_transport_security)
-    setImmediate(classes_potential_jailbreak_detection)
-    setImmediate(methods_potential_jailbreak_detection)
+    if (jailbreak) {
+        setImmediate(classes_potential_jailbreak_detection)
+        setImmediate(methods_potential_jailbreak_detection)
+    }
 }
 
 //Twitter: https://twitter.com/xploresec

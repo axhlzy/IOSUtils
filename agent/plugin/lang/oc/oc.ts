@@ -187,6 +187,7 @@ globalThis.getSuperClasses = (ptr: NativePointer | number | string | ObjC.Object
 }
 
 const showSuperClasses = (ptr: NativePointer | number | string | ObjC.Object) => {
+    if (ptr instanceof ObjC.Object) ptr = ptr.handle
     const arr = getSuperClasses(checkPointer(ptr))
     let disp: string = ''
     try {
@@ -455,9 +456,10 @@ const watch_getClass = () => {
     // OBJC_EXPORT void objc_setHook_getClass(objc_hook_getClass _Nonnull newValue, objc_hook_getClass _Nullable * _Nonnull outOldValue)
 }
 
-globalThis.printDictionary = (dictionary: ObjC.Object | NativePointer)=> {
+globalThis.printDictionary = (dictionary: ObjC.Object | NativePointer | number | string)=> {
     let dis: ObjC.Object
     if (dictionary instanceof NativePointer) dis = new ObjC.Object(dictionary)
+    else if (typeof dictionary =="number" || (typeof dictionary =="string" && dictionary.startsWith("0x"))) dis = new ObjC.Object(ptr(dictionary))
     else if (dictionary instanceof ObjC.Object) dis = dictionary
     else throw new Error('Error dictionary(args[0]), Need ObjC.Object or NativePointer')
     const keys = dis.allKeys()
@@ -468,9 +470,10 @@ globalThis.printDictionary = (dictionary: ObjC.Object | NativePointer)=> {
     }
 }
 
-globalThis.printArray = (array: ObjC.Object | NativePointer) => {
+globalThis.printArray = (array: ObjC.Object | NativePointer | number | string) => {
     let arr: ObjC.Object
     if (array instanceof NativePointer) arr = new ObjC.Object(array)
+    if (typeof array =="number" || (typeof array =="string" && array.startsWith("0x"))) arr = new ObjC.Object(ptr(array))
     else if (array instanceof ObjC.Object) arr = array
     else throw new Error('Error array(args[0]), Need ObjC.Object or NativePointer')
     const count = arr.count()
@@ -499,8 +502,8 @@ declare global {
     var getSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => Array<ObjC.Object>
     var showSubClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
 
-    var printDictionary: (dictionary: ObjC.Object | NativePointer)=>void
-    var printArray: (array: ObjC.Object | NativePointer) => void
+    var printDictionary: (dictionary: ObjC.Object | NativePointer | number | string)=>void
+    var printArray: (array: ObjC.Object | NativePointer | number | string) => void
 }
 
 

@@ -166,48 +166,150 @@ const bytesToUTF8 = (data: any): string => {
         return data.toString()
     }
     const s: NSString = ObjC.classes.NSString.alloc().initWithBytes_length_encoding_(
-        data.bytes(), data.length(), NSUTF8StringEncoding);
+        data.bytes(), data.length(), NSUTF8StringEncoding)
     if (s) {
         return s.UTF8String()
     }
     return ""
-};
+}
 
-globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) => {
-    const mPtr = checkPointer(ptr)
+globalThis.getIvars = (clazz: NativePointer | string | number | ObjC.Object): Array<{ objClazz: ObjC.Object, handle: NativePointer, name: string, offset: number }> => {
+    const mPtr = checkPointer(clazz)
+    const obj: ObjC.Object = new ObjC.Object(mPtr) // class handle
+    if (obj.$kind != "instance") throw new Error("Wrong Object ptr\nclass_copyIvarList api only support instance ptr as first argument")
+
+    const classHandles = []
+    let currentClassHandle = obj.$class.handle
+    do {
+        classHandles.unshift(currentClassHandle)
+        currentClassHandle = ObjC.api.class_getSuperclass(currentClassHandle)
+    } while (!currentClassHandle.isNull())
+
+    const retValue: Array<{ objClazz: ObjC.Object, handle: NativePointer, name: string, offset: number }> = new Array()
+    const numIvarsBuf = Memory.alloc(Process.pointerSize)
+    classHandles.forEach(clazz => {
+        const ivarHandles = ObjC.api.class_copyIvarList(clazz, numIvarsBuf)
+        try {
+            const numIvars = numIvarsBuf.readUInt()
+            for (let i = 0; i !== numIvars; i++) {
+                const handle = ivarHandles.add(i * Process.pointerSize).readPointer()
+                const name = ObjC.api.ivar_getName(handle).readUtf8String()
+                const offset = ObjC.api.ivar_getOffset(handle).toInt32()
+                retValue.push({ objClazz: new ObjC.Object(clazz), handle: handle, name: name, offset: offset })
+            }
+        } finally {
+            ObjC.api.free(ivarHandles)
+        }
+    })
+    return retValue
+}
+
+globalThis.showIvars = (clazz: NativePointer | string | number | ObjC.Object): void => {
+    const mPtr = checkPointer(clazz)
+    let obj: ObjC.Object = new ObjC.Object(mPtr) // obj handle
+    showSuperClasses(obj.handle)
+    const res: { objClazz: ObjC.Object, handle: NativePointer, name: string, offset: number }[] = getIvars(obj.handle)
+
+    const groupedByObjClazz = res.reduce((acc, item) => {
+        const clazzKey = item.objClazz.toString()
+        if (!acc[clazzKey]) {
+            acc[clazzKey] = []
+        }
+        acc[clazzKey].push(item)
+        return acc
+    }, {} as Record<string, { objClazz: ObjC.Object, handle: NativePointer, name: string, offset: number }[]>)
+
+    Object.keys(groupedByObjClazz).forEach((clazzKey) => {
+        logz(`--- ${ObjC.classes[clazzKey].handle} & ${clazzKey} ---`)
+        groupedByObjClazz[clazzKey].forEach((item, index) => logd(`[ ${index} ]\t${ptr(item.offset)} -> ${item.name}`))
+    })
+    newLine()
+}
+globalThis.lfs = (ptrArg: NativePointer | string | number, ret: boolean = false) => {
+    const mPtr = checkPointer(ptrArg)
     const obj = new ObjC.Object(mPtr) // class handle
     if (obj.$kind != "instance") throw new Error("ivars | can only parse instance")
     showSuperClasses(obj.handle)
+    
+    const res = getIvars(obj.handle)
+    const groupedByObjClazz = res.reduce((acc, item) => {
+        const clazzKey = item.objClazz.toString()
+        if (!acc[clazzKey]) {
+            acc[clazzKey] = []
+        }
+        acc[clazzKey].push(item)
+        return acc
+    }, {} as Record<string, { objClazz: ObjC.Object, handle: NativePointer, name: string, offset: number }[]>)
+
     const $clonedIvars: { [name: string]: any } = {}
     const vars = obj.$ivars
-    let index: number = 0
-    for (const k in vars) {
-        try {
-            if (vars.hasOwnProperty(k)) {
-                const v = vars[k] as Object
-                $clonedIvars[k] = bytesToUTF8(v)
-                if (ret) continue
-                if (v instanceof ObjC.Object) {
-                    logd(`[${++index}] ${k}: | ObjC.Object <- ${v.$kind} of ${v.$className} @ ${v.$class.handle}`)
-                    logz(`\t${v.handle}`)
-                } else if (typeof v == "object") {
-                    logd(`[${++index}] ${k}: | ${typeof v}`)
-                    logz(`\t${v}`)
-                } else {
-                    logd(`[${++index}] ${k}: | ${typeof v}`)
-                    logz(`\t${$clonedIvars[k]}`)
+
+    // 按分组展示
+    Object.keys(groupedByObjClazz).forEach((clazzKey) => {
+        logn(`\n--- ${ObjC.classes[clazzKey].handle} & ${clazzKey} ---`)
+        groupedByObjClazz[clazzKey].forEach((item, index) => {
+            try {
+                const name = item.name
+                if (vars.hasOwnProperty(name)) {
+                    const v = vars[name] as Object
+                    $clonedIvars[name] = bytesToUTF8(v)
+                    if (ret) return
+                    if (v instanceof ObjC.Object) {
+                        logd(`[ ${index} ]\t${ptr(item.offset)} -> ${name}: | ObjC.Object <- ${v.$kind} of ${v.$className} @ ${v.$class.handle}`)
+                        logz(`\t${v.handle}`)
+                    } else if (typeof v == "object") {
+                        logd(`[ ${index} ]\t${ptr(item.offset)} -> ${name}: | ${typeof v}`)
+                        logz(`\t${v}`)
+                    } else {
+                        logd(`[ ${index} ]\t${ptr(item.offset)} -> ${name}: | ${typeof v}`)
+                        logz(`\t${$clonedIvars[name]}`)
+                    }
                 }
+            } catch (error) {
+                logd(`[ ${index} ]\t${ptr(item.offset)} -> ${item.name}: | Error accessing value`)
             }
-        } catch (error) {
-
-        }
-    }
+        })
+    })
+    newLine()
+    
     if (ret) return $clonedIvars
-
-    function extInfo() {
-
-    }
 }
+
+
+
+// globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) => {
+//     const mPtr = checkPointer(ptr)
+//     const obj = new ObjC.Object(mPtr) // class handle
+//     if (obj.$kind != "instance") throw new Error("ivars | can only parse instance")
+//     showSuperClasses(obj.handle)
+//     const $clonedIvars: { [name: string]: any } = {}
+//     const vars = obj.$ivars
+//     let index: number = 0
+
+//     // frida-oc-bridge impl
+//     for (const k in vars) {
+//         try {
+//             if (vars.hasOwnProperty(k)) {
+//                 const v = vars[k] as Object
+//                 $clonedIvars[k] = bytesToUTF8(v)
+//                 if (ret) continue
+//                 if (v instanceof ObjC.Object) {
+//                     logd(`[${++index}] ${k}: | ObjC.Object <- ${v.$kind} of ${v.$className} @ ${v.$class.handle}`)
+//                     logz(`\t${v.handle}`)
+//                 } else if (typeof v == "object") {
+//                     logd(`[${++index}] ${k}: | ${typeof v}`)
+//                     logz(`\t${v}`)
+//                 } else {
+//                     logd(`[${++index}] ${k}: | ${typeof v}`)
+//                     logz(`\t${$clonedIvars[k]}`)
+//                 }
+//             }
+//         } catch (error) {
+
+//         }
+//     }
+//     if (ret) return $clonedIvars
+// }
 
 enum passValueKey {
     org = "org",
@@ -438,8 +540,8 @@ const _getAddr__mod_init_func = (sectionName: string = "__mod_init_func", module
 }
 
 globalThis.saveFile = (start: number | NativePointer, size: number, fileName: string = `/tmp/${Date.now()}`) => {
-    if (start == null || start ==undefined || start == 0 ) throw new Error("start Address can not be null")
-    if (size == null || size ==undefined || size == 0 ) throw new Error("size can not be null")
+    if (start == null || start == undefined || start == 0) throw new Error("start Address can not be null")
+    if (size == null || size == undefined || size == 0) throw new Error("size can not be null")
     const file = new File(fileName, "wb")
     const startPtr = start instanceof NativePointer ? start : ptr(start)
     file.write(startPtr.readByteArray(size)!)
@@ -447,17 +549,17 @@ globalThis.saveFile = (start: number | NativePointer, size: number, fileName: st
 }
 
 globalThis.saveModule = (mdName: string) => {
-    if (mdName == null || mdName ==undefined || mdName.length == 0 ) throw new Error("mdName can not be null")
+    if (mdName == null || mdName == undefined || mdName.length == 0) throw new Error("mdName can not be null")
     const module = Process.findModuleByName(mdName)
     if (module == null) throw new Error("Module not found")
     saveFile(module.base, module.size, `/tmp/${module.name}`)
 }
 
-globalThis.listModules = (filterName:string) =>{
+globalThis.listModules = (filterName: string) => {
     if (filterName == undefined) {
-        Process.enumerateModules().forEach(item=>logd(JSON.stringify(item)))
+        Process.enumerateModules().forEach(item => logd(JSON.stringify(item)))
     } else {
-        Process.enumerateModules().filter(i=>i.name.includes(filterName)).forEach(item=>logd(JSON.stringify(item))) 
+        Process.enumerateModules().filter(i => i.name.includes(filterName)).forEach(item => logd(JSON.stringify(item)))
     }
 }
 
@@ -474,6 +576,10 @@ declare global {
     var callOC: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => NativePointer
     var callOcOnMain: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => void
     var lfs: (ptr: NativePointer | string | number) => void
+
+    var getIvars: (clazz: NativePointer | string | number | ObjC.Object) => Array<{ objClazz: ObjC.Object, handle: NativePointer, name: string, offset: number }>
+    var showIvars: (clazz: NativePointer | string | number | ObjC.Object) => void
+
     var dumpUI: () => void
 
     var A: (mPtr: ARGM, mOnEnter?: OnEnterType, mOnLeave?: OnExitType, needRecord?: boolean) => void
