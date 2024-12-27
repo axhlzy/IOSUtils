@@ -1,4 +1,5 @@
 import { NSUTF8StringEncoding } from './constants.js'
+import { SIGNAL } from './plugin/memory/findsvc.js'
 import { NSString } from './types.js'
 import './types.js'
 
@@ -220,7 +221,7 @@ globalThis.showIvars = (clazz: NativePointer | string | number | ObjC.Object): v
     }, {} as Record<string, { objClazz: ObjC.Object, handle: NativePointer, name: string, offset: number }[]>)
 
     Object.keys(groupedByObjClazz).forEach((clazzKey) => {
-        logz(`--- ${ObjC.classes[clazzKey].handle} & ${clazzKey} ---`)
+        logn(`\n--- ${ObjC.classes[clazzKey].handle} & ${clazzKey} ---`)
         groupedByObjClazz[clazzKey].forEach((item, index) => logd(`[ ${index} ]\t${ptr(item.offset)} -> ${item.name}`))
     })
     newLine()
@@ -229,8 +230,8 @@ globalThis.lfs = (ptrArg: NativePointer | string | number, ret: boolean = false)
     const mPtr = checkPointer(ptrArg)
     const obj = new ObjC.Object(mPtr) // class handle
     if (obj.$kind != "instance") throw new Error("ivars | can only parse instance")
-    showSuperClasses(obj.handle)
-    
+    showSuperClasses(obj.$class)
+
     const res = getIvars(obj.handle)
     const groupedByObjClazz = res.reduce((acc, item) => {
         const clazzKey = item.objClazz.toString()
@@ -244,7 +245,6 @@ globalThis.lfs = (ptrArg: NativePointer | string | number, ret: boolean = false)
     const $clonedIvars: { [name: string]: any } = {}
     const vars = obj.$ivars
 
-    // 按分组展示
     Object.keys(groupedByObjClazz).forEach((clazzKey) => {
         logn(`\n--- ${ObjC.classes[clazzKey].handle} & ${clazzKey} ---`)
         groupedByObjClazz[clazzKey].forEach((item, index) => {
@@ -255,27 +255,52 @@ globalThis.lfs = (ptrArg: NativePointer | string | number, ret: boolean = false)
                     $clonedIvars[name] = bytesToUTF8(v)
                     if (ret) return
                     if (v instanceof ObjC.Object) {
-                        logd(`[ ${index} ]\t${ptr(item.offset)} -> ${name}: | ObjC.Object <- ${v.$kind} of ${v.$className} @ ${v.$class.handle}`)
-                        logz(`\t${v.handle}`)
+                        const clsName = v.$className
+                        let ext = ''
+                        try {
+                            switch (clsName) {
+                                case '__NSCFString':
+                                    // 特值处理，当然这里这样写是没必要的，只是单独摘出来而已
+                                    ext = `-> "${new ObjC.Object(v.handle)}"`
+                                    break
+                                default:
+                                    if (!v.handle.isNull()) {
+                                        let objStr = asOcObjtoString(v.handle)
+                                        if (objStr.includes("\n")) {
+                                            const lines = objStr.split("\n")
+                                            objStr = lines.map(line => `\t\t${line}`).join("\n")
+                                            objStr = `\n${objStr}`
+                                        }
+                                        ext = `-> ${objStr}`
+                                    }
+                                    break
+                            }
+                        } catch (error) { }
+                        logd(`[ ${index} ]\t${ptr(item.offset)} [ ${ptr(item.offset).add(mPtr)} ] -> ${name}: | ObjC.Object <- ${v.$kind} of ${clsName} @ ${v.$class.handle}`)
+                        logz(`\t${v.handle} ${ext}`)
                     } else if (typeof v == "object") {
-                        logd(`[ ${index} ]\t${ptr(item.offset)} -> ${name}: | ${typeof v}`)
+                        logd(`[ ${index} ]\t${ptr(item.offset)} [ ${ptr(item.offset).add(mPtr)} ] -> ${name}: | ${typeof v}`)
                         logz(`\t${v}`)
                     } else {
-                        logd(`[ ${index} ]\t${ptr(item.offset)} -> ${name}: | ${typeof v}`)
+                        logd(`[ ${index} ]\t${ptr(item.offset)} [ ${ptr(item.offset).add(mPtr)} ] -> ${name}: | ${typeof v}`)
                         logz(`\t${$clonedIvars[name]}`)
                     }
                 }
             } catch (error) {
-                logd(`[ ${index} ]\t${ptr(item.offset)} -> ${item.name}: | Error accessing value`)
+                logd(`[ ${index} ]\t${ptr(item.offset)} [ ${ptr(item.offset).add(mPtr)} ] -> ${item.name}: | Error accessing value`)
             }
         })
     })
     newLine()
-    
+
     if (ret) return $clonedIvars
 }
 
+globalThis.getBacktrace = (ctx: CpuContext): string => `called from:\n${Thread.backtrace(ctx, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n\t')}\n`
 
+globalThis.printBacktrace = (ctx: CpuContext): void => log(getBacktrace(ctx))
+
+globalThis.raise = (sign: SIGNAL = SIGNAL.SIGSTOP): number => new NativeFunction(Module.findExportByName(null, 'raise')!, 'int', ['int'])(sign)
 
 // globalThis.lfs = (ptr: NativePointer | string | number, ret: boolean = false) => {
 //     const mPtr = checkPointer(ptr)
@@ -410,7 +435,6 @@ const stk = (mPtr: NativePointer) => {
                         stringify: false,
                         annotate: false
                     });
-                    logd("↓ Stalker trace ↓\n")
                     logd(bbs.flat().map(item => DebugSymbol.fromAddress(ptr(item as unknown as string))).join('\n'));
                 }
             })
@@ -467,6 +491,18 @@ globalThis.showAsm = (mPtr: NativePointer, len: number = 0x20) => {
 
 globalThis.asOcObj = (mPtr: NativePointer | string) => {
     return new ObjC.Object(ptr(mPtr as unknown as string))
+}
+
+globalThis.asOcObjtoString = (mPtr: NativePointer | string) => {
+    return decodeURIComponent(new ObjC.Object(ptr(mPtr as unknown as string)).toString()).toString()
+}
+
+globalThis.asOcString = (mPtr: NativePointer | string) => {
+    logd(decodeURIComponent(new ObjC.Object(ptr(mPtr as unknown as string)).toString()))
+}
+
+globalThis.asOcSELtoString = (mPtr: NativePointer | string) => {
+    return ObjC.selectorAsString(ptr(mPtr as unknown as string))
 }
 
 globalThis.demangleName = (expName: string): string => {
@@ -563,6 +599,46 @@ globalThis.listModules = (filterName: string) => {
     }
 }
 
+// ObjC.classes["NIMSDK"]["- registerWithOption:"]
+globalThis.trace = (cls:string = "NIMSDK", func:string = "- registerWithOption:", filterlib:string = "AcmeisApp.app") => {
+    Interceptor.attach(ObjC.classes[cls][func].implementation, {
+        onEnter(args) {
+            const instance = new ObjC.Object(args[0])
+            const sel = ObjC.selectorAsString(args[1])
+            this.msg = `${cls} ${func} ${instance} ${sel}`
+            logw(`\nCalled -> ${this.msg}`)
+            const tid = Process.getCurrentThreadId()
+            logw(`\nThread ID: ${tid}`)
+    
+            const mdmap = new ModuleMap(item=>item.path.includes(filterlib))
+            logd("↓ Stalker trace ↓\n")
+            Stalker.follow(tid, {
+                events: {
+                    call: true,
+                    ret:true
+                },
+                onReceive: function (events) {
+                    const bbs = Stalker.parse(events, {
+                        stringify: false,
+                        annotate: false
+                    });
+                    let msg = bbs.flat()
+                        .map(item=>ptr(item as unknown as string))
+                        .filter(item=>mdmap.has(item))
+                        .map(item => DebugSymbol.fromAddress(item))
+                        .map(item => `${item} ${item.address}`)
+                        .join('\n') 
+                    logd(msg)
+                }
+            })
+        },
+        onLeave: function (retval) {
+            logd("onLeave")
+            Stalker.unfollow()
+        }
+    })
+}
+
 declare global {
     var ProcessDispTask: any
     var clear: () => void
@@ -581,6 +657,8 @@ declare global {
     var showIvars: (clazz: NativePointer | string | number | ObjC.Object) => void
 
     var dumpUI: () => void
+    
+    var trace: () => void
 
     var A: (mPtr: ARGM, mOnEnter?: OnEnterType, mOnLeave?: OnExitType, needRecord?: boolean) => void
     var d: (mPtr?: ARGM) => void
@@ -598,6 +676,10 @@ declare global {
     var showAsm: (mPtr: NativePointer, len?: number) => void
 
     var asOcObj: (mPtr: NativePointer) => ObjC.Object
+    var asOcObjtoString: (mPtr: NativePointer) => string
+    var asOcString: (mPtr: NativePointer) => void
+    var asOcSELtoString: (mPtr: NativePointer) => string
+
     var demangleName: (expName: string) => string
 
     var getSym: (filterName: string, mdName?: string) => ModuleSymbolDetails[] | undefined
@@ -607,6 +689,10 @@ declare global {
     var saveFile: (start: number | NativePointer, size: number, fileName?: string) => void
     var saveModule: (mdName: string) => void
     var listModules: (filterName: string) => void
+
+    var raise: (sig: SIGNAL) => void
+    var printBacktrace: (ctx: CpuContext) => void
+    var getBacktrace: (ctx: CpuContext) => string
 }
 
 export enum HK_TYPE {

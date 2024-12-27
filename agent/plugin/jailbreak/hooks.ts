@@ -250,7 +250,7 @@ const hook_get_image_name = () => {
     const addr = Module.findExportByName("libdyld.dylib", "_dyld_get_image_name")!
     Interceptor.attach(addr, {
         onEnter(args) {
-            this.disp = `dyld_get_image_name ( index=${args[0]} | ${args[0].toInt32()} )`
+            this.disp = `[${Process.getCurrentThreadId()}] dyld_get_image_name ( index=${args[0]} | ${args[0].toInt32()} )`
         },
         onLeave(retval) {
             const ret_str = retval.readCString()
@@ -263,6 +263,7 @@ const hook_get_image_name = () => {
             ) {
                 loge(disp_str)
                 const new_ret = ret_str
+                    .replace("substitute-loader", "sl")
                     .replace("substitute", "---")
                     .replace("substrate", "---")
                     .replace("CepheiUI", "---")

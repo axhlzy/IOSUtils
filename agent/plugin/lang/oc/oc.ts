@@ -16,7 +16,37 @@ globalThis.findMethodsByResolver = (query: string) => {
     let count: number = 0
     new ApiResolver("objc")
         .enumerateMatches(query)
-        .forEach((m: ApiResolverMatch) => logd(`[ ${count++} ]\t${m.address}\t${m.name}`))
+        .forEach((m: ApiResolverMatch) => {
+            try {
+                // todo parse address to method
+                // const dbgs = DebugSymbol.fromAddress(m.address)
+
+                // [iPhone::设置 ]-> DebugSymbol.fromAddress(ptr(0x19c8bba00))
+                // {
+                //     "address": "0x19c8bba00",
+                //     "column": 0,
+                //     "fileName": "",
+                //     "lineNumber": 0,
+                //     "moduleName": "Preferences",
+                //     "name": "-[PSTableCell cellTarget]"
+                // }
+
+                // Name                    ->      cellTarget
+                // NumberOfArguments       ->      2
+                // TypeEncoding            ->      @16@0:8
+                // ObjectMethod            ->      0x19c9a82d1
+                // Implementation          ->      0x19c8bba00 | 0x35a00
+                // ReturnType
+                //         ret:            @ - object
+                // ArgumentTypes
+                //         args[0]:        @ - object
+                //         args[1]:        : - selector
+
+            } catch (error) {
+                
+            }
+            logd(`[ ${count++} ]\t${m.address}\t${m.name}`)
+        })
 }
 
 const getClassFromMethodName = (name: string, filterClass: Array<ObjC.Object>): ObjC.Object | undefined => {
@@ -27,17 +57,21 @@ const getClassFromMethodName = (name: string, filterClass: Array<ObjC.Object>): 
     }
 }
 
+export function getClassPtrDebugInfo(cls:ObjC.Object) {
+    try {
+        const debugSym = DebugSymbol.fromAddress(cls.handle)
+        const md = Process.findModuleByName(debugSym.moduleName!)
+        return `${debugSym.name} IN ${debugSym.moduleName} [ ${md?.path} ${ptr(md?.size!)} ]`
+    } catch (error) { 
+        return ''
+    }
+}
+
 globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter: string = '', includeParent: boolean = false) => {
     const obj = new ObjC.Object(checkPointer(clsNameOrPtr))
     logw(`\nDisplay methods of ${obj.$className} @ ${obj.$class.handle}`)
-    try {
-        const debugSym = DebugSymbol.fromAddress(obj.$class.handle)
-        const md = Process.findModuleByName(debugSym.moduleName!)
-        logz(`${debugSym.name} IN ${debugSym.moduleName} [ ${md?.path} ${ptr(md?.size!)} ]`)
-    } catch (error) { }
-
-    showSuperClasses(obj)
-
+    logz(getClassPtrDebugInfo(obj.$class))
+    showSuperClasses(obj.handle)
     // const supClasses = getSuperClasses(obj)
 
     let count: number = 0
@@ -192,14 +226,16 @@ const showSuperClasses = (ptr: NativePointer | number | string | ObjC.Object) =>
     let disp: string = ''
     try {
         for (let i = 0; i < arr.length; i++) {
-            disp += arr[i].$className
-            disp += ` ( ${arr[i].$class.handle} ) `
+            const className = arr[i].$className
+            const classHandle = arr[i].$class.handle
+            const debugInfo = getClassPtrDebugInfo(arr[i])
+            // logw(debugInfo)
+            const color = (debugInfo.includes("/System/Library/") || debugInfo.includes("/usr/lib/")) ? 94 : 36
+            disp += `\x1b[${color}m${className} ( ${classHandle} )\x1b[0m`
             if (i < arr.length - 1) disp += ' -> '
         }
-    } catch (error) {
-        // ...
-    }
-    logd(`\n${disp}\n`)
+    } catch (error) { }
+    log(`\n${disp}\n`)
 }
 
 const showSubClasses = (ptr: NativePointer | number | string | ObjC.Object) => {
@@ -484,6 +520,27 @@ globalThis.printArray = (array: ObjC.Object | NativePointer | number | string) =
     }
 }
 
+globalThis.printSet = (set: ObjC.Object | NativePointer | number | string) => {
+    let objSet: ObjC.Object
+    
+    if (set instanceof NativePointer) objSet = new ObjC.Object(set)
+    else if (typeof set === "number" || (typeof set === "string" && set.startsWith("0x"))) objSet = new ObjC.Object(ptr(set))
+    else if (set instanceof ObjC.Object) objSet = set
+    else throw new Error('Error set(args[0]), Need ObjC.Object or NativePointer')
+    
+    const allObjects = objSet.allObjects()
+    const count = allObjects.count()
+    
+    if (count === 0) {
+        loge('Null set')
+        return
+    }
+    
+    for (let i = 0; i < count; i++) {
+        const value = allObjects.objectAtIndex_(i)
+        logd(`Index: ${i}, Value: ${value.toString()}`)
+    }
+}
 
 declare global {
     var cacheAllClass: ObjC.Object[]
@@ -504,6 +561,7 @@ declare global {
 
     var printDictionary: (dictionary: ObjC.Object | NativePointer | number | string)=>void
     var printArray: (array: ObjC.Object | NativePointer | number | string) => void
+    var printSet: (array: ObjC.Object | NativePointer | number | string) => void
 }
 
 

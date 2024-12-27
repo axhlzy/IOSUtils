@@ -8,9 +8,21 @@ globalThis.hook_dlopen = (onCall?:(name:string)=>void, printBackTrace:boolean=fa
         },(retval, _ctx, pv)=>{
             const msg = `${pv.get("msg")}`
             logd(`${retval} = ${msg}`)
-            if (msg.includes("UnityFramework")){
-                saveModule("UnityFramework")
-                sleep(100)
+            if (msg.includes("CFNetwork")){
+                // Interceptor.replace(Process.findModuleByName("TuanjieFramework")!.base.add(0x4AD380), new NativeCallback((arg) => {
+                //     logw(`\n[${Process.getCurrentThreadId()}] Called TuanjieFramework!0x4AD380 \n\targs:${arg}`)
+                //     return ptr(0)
+                // }, "pointer", ["pointer"]))
+
+                // 3A3F20
+                // let addr = Process.findModuleByName("TuanjieFramework")!.base.add(0x3A2274)
+                // // new Arm64Writer(addr).putRet()
+
+                // // sub_3A2274
+                // Interceptor.replace(addr, new NativeCallback((arg) => {
+                //     logw(`\n[${Process.getCurrentThreadId()}] Called TuanjieFramework!0x3A2274 \n\targs:${arg}`)
+                //     return ptr(0)
+                // }, "pointer", ["pointer"]))
             }
         }
     )

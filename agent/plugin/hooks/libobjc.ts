@@ -23,14 +23,28 @@ globalThis.hook_load_images = () => {
                 // dumpModule("UnityFramework")
                 // dumpAllMd()
 
-                Interceptor.replace(ObjC.classes.WindShareData["- initUserAgent"].implementation, new NativeCallback(() => {
-                    logd("nop initUserAgent")
+                // Interceptor.replace(ObjC.classes.WindShareData["- initUserAgent"].implementation, new NativeCallback(() => {
+                //     logd("nop initUserAgent")
+                // }, "void", []))
+
+                // // UnityFramework!-[BDASignalManager preGetCachedData]
+                // Interceptor.replace(ObjC.classes.BDASignalManager["- preGetCachedData"].implementation, new NativeCallback(() => {
+                //     logd("nop BDASignalManager preGetCachedData")
+                // }, "void", []))
+
+                // +[RMColdLaunchMonitor load]
+                Interceptor.replace(ObjC.classes.RMColdLaunchMonitor["+ load"].implementation, new NativeCallback(() => {
+                    logd("nop RMColdLaunchMonitor load")
                 }, "void", []))
 
-                // UnityFramework!-[BDASignalManager preGetCachedData]
-                Interceptor.replace(ObjC.classes.BDASignalManager["- preGetCachedData"].implementation, new NativeCallback(() => {
-                    logd("nop BDASignalManager preGetCachedData")
+                const base = Process.findModuleByName("UnityFramework")
+                LOGJSON(base)
+
+                // 176C290                 EXPORT InitFunc_595
+                Interceptor.replace(base!.base.add(0x176C290), new NativeCallback(() => {
+                    logd("nop InitFunc_595")
                 }, "void", []))
+
 
             }
         }

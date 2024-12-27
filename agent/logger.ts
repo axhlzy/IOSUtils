@@ -9,8 +9,8 @@ export enum LogColor {
 export class Logger {
 
     private static linesMap = new Map()
-    private static colorEndDes: string = "\x1b[0m"
-    private static colorStartDes = (color: LogColor): string => `\x1b[${color as number}m`
+    public static colorEndDes: string = "\x1b[0m"
+    public static colorStartDes = (color: LogColor): string => `\x1b[${color as number}m`
 
     static LOGW = (msg: any): void => Logger.LOG(msg, LogColor.YELLOW)
     static LOGE = (msg: any): void => Logger.LOG(msg, LogColor.RED)

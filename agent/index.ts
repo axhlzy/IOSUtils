@@ -1,12 +1,17 @@
 import './include.js'
 import './logger.js'
+import { hook_NSProcessInfo } from './plugin/exp/NSProcessInfo.js'
+import { hook_pthread_ } from './plugin/exp/pthread_.js'
+import { SIGNAL } from './plugin/memory/findsvc.js'
 
-// hook_exit()
+logd(Process.getCurrentThreadId())
+
 // hook_strcmp()
 // hook_all_detect()
 
 // hook_dyld_get_image_name()
 // hook_dyld_mod_init_funcs()
+// hook_dyld_doModInitFunctions()
 
 // hook_dlopen()
 // hook_load_images()
@@ -14,14 +19,11 @@ import './logger.js'
 // hook_initialize()
 // hook_load()
 // hook_dispatch()
+// hook_NSProcessInfo()
+// hook_pthread_()
 
-// B("UPWDeviceUtil")
-// -m "*[* *canOpenURL*]"
 
-// nopSysCall()
-// findBRKInstructions()
-
-// ObjC.classes.NSMutableDictionary.dictionary()
+// examples ↓ 
 
 // OC replace
 // const oc_src: ObjC.ObjectMethod = ObjC.classes["BCEUIAlertAction"]["- alertUserInMainThreadWithType:withMessage:withTitle:"]
@@ -32,31 +34,13 @@ import './logger.js'
 // })
 // oc_src.implementation = newM
 
-// Interceptor.attach(ObjC.classes["NSFileManager"]["- fileExistsAtPath:"].implementation, {
+
+// // -[ISLanguageSetupController setLanguage:0x8dcc5b6d84ef5a86 specifier:0x0]
+// Interceptor.attach(ObjC.classes["ISLanguageSetupController"]["- setLanguage:specifier:"].implementation, {
 //     onEnter(args) {
 //         const ins = new ObjC.Object(args[0])
 //         const sel = ObjC.selectorAsString(args[1])
-//         const nsstring = new ObjC.Object(args[3])
-//         console.warn(`\nCalled NSFileManager ${ins} ${sel} fileExistsAtPath:'${nsstring}'`)
+//         const value = new ObjC.Object(args[2])
+//         logw(`\nCalled ISLanguageSetupController \n\t${ins} \n\t${sel} \n\tsetLanguage:'${value}'`)
 //     }
-// })
-
-// Interceptor.replace(ObjC.classes["NSFileManager"]["- fileExistsAtPath:"].implementation, new NativeCallback(function(arg0,arg1,arg2){
-//     const ins = new ObjC.Object(arg0)
-//     const sel = ObjC.selectorAsString(arg1)
-//     const nsstring = new ObjC.Object(arg2)
-//     logw(`\nCalled NSFileManager ${ins} ${sel} fileExistsAtPath:'${nsstring}'`)
-// }, "void", ["pointer", "pointer", "pointer"]))
-
-// frida-trace -U -f  com.cmbc.mobilePhone -m "*[NSFileManager *]" -i _dyld_get_image_name -i abort   
-
-// A(Module.getExportByName(null, "_pthread_start"),(args, ctx)=>{
-//     logd("called _pthread_start")
-//     let logs = `called from:\n${Thread.backtrace(ctx, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n\t')}\n`
-//     log(logs)
-// })
-// A(Module.getExportByName(null, "pthread_create"),(args, ctx)=>{
-//     logd("called pthread_create")
-//     let logs = `called from:\n${Thread.backtrace(ctx, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n\t')}\n`
-//     log(logs)
 // })

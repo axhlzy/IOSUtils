@@ -43,7 +43,7 @@ globalThis.hook_dyld_get_image_name = () => {
 // hook __mod_init_funcs
 globalThis.hook_dyld_mod_init_funcs = (offset?: NativePointer | number) => {
 
-    logd("called hook_dyld_mod_init_funcs")
+    logd(`called hook_dyld_mod_init_funcs | offset: ${findOffset()}`)
 
     // src/ImageLoaderMachO.cpp
     // void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
@@ -52,7 +52,7 @@ globalThis.hook_dyld_mod_init_funcs = (offset?: NativePointer | number) => {
         const addr = getSym("ImageLoaderMachO::doModInitFunctions", "dyld")![0].address
         let maxInsItor = 200
         let current = Instruction.parse(addr)
-        let md = Process.findModuleByName("dyld")!
+        
         const addr_helper = getSym("_ZN4dyld17gLibSystemHelpersE", "dyld")![0].address
 
         while (--maxInsItor > 0) {
@@ -155,10 +155,18 @@ globalThis.hook_dyld_mod_init_funcs = (offset?: NativePointer | number) => {
     })
 }
 
+// do __mod_init_funcs in this function ↓
 globalThis.hook_dyld_doModInitFunctions = () => {
+    // getInstallPath
+    const sym_getInstallPath = getSym("getInstallPath", "dyld")![0].address
+    const func_getInstallPath = new NativeFunction(sym_getInstallPath, "pointer", ["pointer"])
+
+    // _ZN16ImageLoaderMachO18doModInitFunctionsERKN11ImageLoader11LinkContextE
     // void ImageLoaderMachO::doModInitFunctions(const LinkContext& context)
     A(getSym("doModInitFunctions", "dyld")![0].address, (args) => {
+        const installPath = func_getInstallPath(args[0]).readCString()
         logd(`Enter doModInitFunctions ImageLoaderMachO:${args[0]} LinkContext&:${args[1]}`)
+        logw(`\t-> ${installPath}`)
         // hex(args[1])
     }, () => {
         logd(`Exit doModInitFunctions\n`)
