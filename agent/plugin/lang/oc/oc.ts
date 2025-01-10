@@ -101,8 +101,8 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
                 } catch (error) {
                     // instance methods
                     const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
-                    const method = call("class_getInstanceMethod", obj, selector)
-                    const impl = call("method_getImplementation", method)
+                    const method = ObjC.api.class_getInstanceMethod(obj, selector)
+                    const impl = ObjC.api.method_getImplementation(method)
                     const md = Process.findModuleByAddress(impl)
                     let extraDes: string = "-> "
                     try {
@@ -120,60 +120,61 @@ globalThis.showMethods = (clsNameOrPtr: number | string | NativePointer, filter:
     logn(`\n{ F:${count + 1} / A:${obj.$methods.length} }\n`)
 }
 
-globalThis.findMethods = (query: string, className?: string, accurate = false) => {
-    if (query == null)
-        throw new Error("query cannot be null")
+// FIXME: This function is deprecated, use findMethodsByResolver instead
+// globalThis.findMethods = (query: string, className?: string, accurate = false) => {
+//     if (query == null)
+//         throw new Error("query cannot be null")
 
-    let count: number = 0
-    if (!className) {
-        getCachedClasses().forEach(cls => ItorClassMethods(cls, query, accurate))
-    } else {
-        ItorClassMethods(ObjC.classes[className], query, accurate)
-    }
-    newLine()
+//     let count: number = 0
+//     if (!className) {
+//         getCachedClasses().forEach(cls => ItorClassMethods(cls, query, accurate))
+//     } else {
+//         ItorClassMethods(ObjC.classes[className], query, accurate)
+//     }
+//     newLine()
 
-    function ItorClassMethods(cls: ObjC.Object, query: string, accurate: boolean) {
-        const methods = cls.$methods.filter((m) => accurate ? m == query : m.includes(query))
-        if (methods.length != 0) logw(`\n[!] ${cls.handle} | ${methods.length} | ${cls.$className} \n`)
-        else throw new Error(`class methods len = ${cls.$methods} ... after Fileter ${methods.length}`)
-        methods
-            .map((m, i) => {
-                try {
-                    // class methods
-                    const method = cls.$class[m]
-                    const impl = method.implementation // throw error while type of class is instance
-                    const md = Process.findModuleByAddress(impl)
-                    let extraDes: string = "-> "
-                    try {
-                        // after objc.implement, An error will be triggered here.
-                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                        extraDes += `${rva} `
-                    } catch (error) {
-                        extraDes = ''
-                    }
-                    return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} ${extraDes} | ${m}`
-                } catch (error) {
-                    // instance methods
-                    const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
-                    const method = call("class_getInstanceMethod", cls, selector)
-                    const impl = call("method_getImplementation", method)
-                    const md = Process.findModuleByAddress(impl)
-                    let extraDes: string = "-> "
-                    try {
-                        // after objc.implement, An error will be triggered here.
-                        const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
-                        extraDes += `${rva} `
-                    } catch (error) {
-                        extraDes = ''
-                    }
-                    return `[ ${i} ]\t M: ${method} -> ${impl} ${extraDes} | ${m}`
-                }
-            })
-            .sort((a, b) => b[0].localeCompare(a[0]))
-            .map(m => `[ ${count++} ]\t${m}`)
-            .forEach(logd)
-    }
-}
+//     function ItorClassMethods(cls: ObjC.Object, query: string, accurate: boolean) {
+//         const methods = cls.$methods.filter((m) => accurate ? m == query : m.includes(query))
+//         if (methods.length != 0) logw(`\n[!] ${cls.handle} | ${methods.length} | ${cls.$className} \n`)
+//         else throw new Error(`class methods len = ${cls.$methods} ... after Fileter ${methods.length}`)
+//         methods
+//             .map((m, i) => {
+//                 try {
+//                     // class methods
+//                     const method = cls.$class[m]
+//                     const impl = method.implementation // throw error while type of class is instance
+//                     const md = Process.findModuleByAddress(impl)
+//                     let extraDes: string = "-> "
+//                     try {
+//                         // after objc.implement, An error will be triggered here.
+//                         const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+//                         extraDes += `${rva} `
+//                     } catch (error) {
+//                         extraDes = ''
+//                     }
+//                     return `[ ${i} ]\t M: ${ptr(method)} -> ${impl} ${extraDes} | ${m}`
+//                 } catch (error) {
+//                     // instance methods
+//                     const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
+//                     const method = call("class_getInstanceMethod", cls, selector)
+//                     const impl = call("method_getImplementation", method)
+//                     const md = Process.findModuleByAddress(impl)
+//                     let extraDes: string = "-> "
+//                     try {
+//                         // after objc.implement, An error will be triggered here.
+//                         const rva = String(impl.sub(md?.base!)).padEnd(11, ' ')
+//                         extraDes += `${rva} `
+//                     } catch (error) {
+//                         extraDes = ''
+//                     }
+//                     return `[ ${i} ]\t M: ${method} -> ${impl} ${extraDes} | ${m}`
+//                 }
+//             })
+//             .sort((a, b) => b[0].localeCompare(a[0]))
+//             .map(m => `[ ${count++} ]\t${m}`)
+//             .forEach(logd)
+//     }
+// }
 
 globalThis.findClasses = (query: string, accurate: boolean = false) => {
     if (query == null)
@@ -283,14 +284,14 @@ globalThis.showMethod = (method: number | string | NativePointer, extName?: stri
     logs(getLine(60, '-'))
 
     // OBJC_EXPORT SEL _Nonnull method_getName(Method _Nonnull m)
-    const name = call("method_getName", localM).readCString() as string
+    const name = ObjC.api.method_getName(localM).readCString() as string
     logd(`Name\t\t\t->\t${name} ${extName == undefined ? '' : ` | ${extName}`}`)
 
     const argsCount = call("method_getNumberOfArguments", localM).toInt32()
     logd(`NumberOfArguments\t->\t${argsCount}`)
 
     // OBJC_EXPORT const char * _Nullable method_getTypeEncoding(Method _Nonnull m) 
-    const typeEncoding = call("method_getTypeEncoding", localM).readCString()
+    const typeEncoding = ObjC.api.method_getTypeEncoding(localM).readCString()
     logd(`TypeEncoding\t\t->\t${typeEncoding}`)
 
     // // struct objc_method_description {
@@ -316,7 +317,7 @@ globalThis.showMethod = (method: number | string | NativePointer, extName?: stri
     logd(`ObjectMethod\t\t->\t${localM}`)
 
     // OBJC_EXPORT IMP _Nonnull method_getImplementation(Method _Nonnull m) 
-    const implementation = call("method_getImplementation", localM) as NativePointer
+    const implementation = ObjC.api.method_getImplementation(localM) as NativePointer
     let extraDes: string
     try {
         const md: Module | null = Process.findModuleByAddress(implementation)!
@@ -339,6 +340,7 @@ globalThis.showMethod = (method: number | string | NativePointer, extName?: stri
     logd(`\tret: \t\t${pk.ret} - ${parseType(pk.ret)}`)
     logd('ArgumentTypes')
     pk.args.forEach((item, index) => logd(`\targs[${index}]:\t${item} - ${parseType(item)}`))
+    logs(getLine(60, '-'))
 }
 
 export const packArgs = (arg: NativePointer, type: string): string => {

@@ -226,6 +226,7 @@ globalThis.showIvars = (clazz: NativePointer | string | number | ObjC.Object): v
     })
     newLine()
 }
+
 globalThis.lfs = (ptrArg: NativePointer | string | number, ret: boolean = false) => {
     const mPtr = checkPointer(ptrArg)
     const obj = new ObjC.Object(mPtr) // class handle
@@ -294,6 +295,21 @@ globalThis.lfs = (ptrArg: NativePointer | string | number, ret: boolean = false)
     newLine()
 
     if (ret) return $clonedIvars
+}
+
+// similar to x/a (lldb)
+globalThis.xa = (ptr: NativePointer | string | number, count: number = 5) => {
+    const mPtr = checkPointer(ptr)
+    newLine()
+    for (let i = 0; i < count; i++) {
+        const indexAddress = mPtr
+        const current = indexAddress.add(i * Process.pointerSize).readPointer()
+        const sym = DebugSymbol.fromAddress(current)
+        const mdName = sym.moduleName
+        const symDisp = mdName == null ? "" : `${mdName} ! ${sym.name}`
+        logd(`${indexAddress} -> ${current.toString().padEnd(4 + Process.pointerSize * 2, ' ')}|\t${symDisp}`)
+    }
+    newLine()
 }
 
 globalThis.getBacktrace = (ctx: CpuContext): string => `called from:\n${Thread.backtrace(ctx, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n\t')}\n`
@@ -477,17 +493,21 @@ globalThis.showAsm = (mPtr: NativePointer, len: number = 0x20) => {
     const l_mPtr = checkPointer(mPtr)
     let next: NativePointer = l_mPtr
     newLine()
+    const sym = DebugSymbol.fromAddress(l_mPtr)
+    if (sym.moduleName != null) logw(`${sym.moduleName} | ${sym.name} @ ${sym.address}\n`)
     while (len-- > 0) {
         try {
             const ins = Instruction.parse(next)
             logd(`${ins.address} ${ins.mnemonic} ${ins.opStr}`)
             next = ins.next
         } catch (error) {
-            // ...   
+            // ...
         }
     }
     newLine()
 }
+
+globalThis.dis = globalThis.showAsm
 
 globalThis.asOcObj = (mPtr: NativePointer | string) => {
     return new ObjC.Object(ptr(mPtr as unknown as string))
@@ -600,7 +620,7 @@ globalThis.listModules = (filterName: string) => {
 }
 
 // ObjC.classes["NIMSDK"]["- registerWithOption:"]
-globalThis.trace = (cls:string = "NIMSDK", func:string = "- registerWithOption:", filterlib:string = "AcmeisApp.app") => {
+globalThis.trace = (cls: string = "NIMSDK", func: string = "- registerWithOption:", filterlib: string = "AcmeisApp.app") => {
     Interceptor.attach(ObjC.classes[cls][func].implementation, {
         onEnter(args) {
             const instance = new ObjC.Object(args[0])
@@ -609,13 +629,13 @@ globalThis.trace = (cls:string = "NIMSDK", func:string = "- registerWithOption:"
             logw(`\nCalled -> ${this.msg}`)
             const tid = Process.getCurrentThreadId()
             logw(`\nThread ID: ${tid}`)
-    
-            const mdmap = new ModuleMap(item=>item.path.includes(filterlib))
+
+            const mdmap = new ModuleMap(item => item.path.includes(filterlib))
             logd("↓ Stalker trace ↓\n")
             Stalker.follow(tid, {
                 events: {
                     call: true,
-                    ret:true
+                    ret: true
                 },
                 onReceive: function (events) {
                     const bbs = Stalker.parse(events, {
@@ -623,11 +643,11 @@ globalThis.trace = (cls:string = "NIMSDK", func:string = "- registerWithOption:"
                         annotate: false
                     });
                     let msg = bbs.flat()
-                        .map(item=>ptr(item as unknown as string))
-                        .filter(item=>mdmap.has(item))
+                        .map(item => ptr(item as unknown as string))
+                        .filter(item => mdmap.has(item))
                         .map(item => DebugSymbol.fromAddress(item))
                         .map(item => `${item} ${item.address}`)
-                        .join('\n') 
+                        .join('\n')
                     logd(msg)
                 }
             })
@@ -635,6 +655,37 @@ globalThis.trace = (cls:string = "NIMSDK", func:string = "- registerWithOption:"
         onLeave: function (retval) {
             logd("onLeave")
             Stalker.unfollow()
+        }
+    })
+}
+
+// usesage => choose("SBTelephonyManager")
+globalThis.choose = (className: string | ObjC.Object | number | NativePointer, callBack?: (item: ObjC.Object) => void | undefined) => {
+    if (typeof className == "string") {
+        var cls = ObjC.classes[className]
+    } else if (className instanceof ObjC.Object) {
+        var cls = className
+    } else if (typeof className == "number") {
+        if (ObjC.api.object_isClass(ptr(className))) {
+            var cls = new ObjC.Object(ptr(className))
+        } else {
+            var cls = new ObjC.Object(ptr(className)).$class
+        }
+    } else if (className instanceof NativePointer) {
+        var cls = new ObjC.Object(className)
+    } else throw new Error(`className must be string | ObjC.Object | number | NativePointer`)
+
+    log('\n')
+    if (cls == null) throw new Error(`Class '${className}' not found`)
+    ObjC.chooseSync(cls).forEach((item, index) => {
+        try {
+            if (callBack == undefined) {
+                let dis = item.toString()
+                if (!dis.includes(item.handle.toString())) dis = `${item.handle} -> ${dis}`
+                logd(`[ ${index} ] ${dis}\n`)
+            } else callBack(item)
+        } catch (e) {
+            logw(e)
         }
     })
 }
@@ -648,16 +699,20 @@ declare global {
     var checkPointer: (ptr: NativePointer | number | string | ObjC.Object | ObjC.ObjectMethod, throwErr?: boolean) => NativePointer
     var allocOCString: (str: string) => ObjC.Object
     var allocCString: (str: string) => NativePointer
+    // call("method_getImplementation", method)
+    // same to ObjC.api.method_getImplementation(method)
     var call: (ptr: NativePointer | number | string | ObjC.Object, ...args: any | NativePointer | ObjC.Object) => NativePointer
     var callOC: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => NativePointer
     var callOcOnMain: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => void
     var lfs: (ptr: NativePointer | string | number) => void
+    var xa: (ptr: NativePointer | string | number, count?: number) => void
+    var choose: (className: string, callBack?: (item: ObjC.Object) => void | undefined) => void
 
     var getIvars: (clazz: NativePointer | string | number | ObjC.Object) => Array<{ objClazz: ObjC.Object, handle: NativePointer, name: string, offset: number }>
     var showIvars: (clazz: NativePointer | string | number | ObjC.Object) => void
 
     var dumpUI: () => void
-    
+
     var trace: () => void
 
     var A: (mPtr: ARGM, mOnEnter?: OnEnterType, mOnLeave?: OnExitType, needRecord?: boolean) => void
@@ -674,6 +729,8 @@ declare global {
     var nameToMethod: (name: string) => ObjC.ObjectMethod
 
     var showAsm: (mPtr: NativePointer, len?: number) => void
+    // alias showAsm ( similar to lldb dis )
+    var dis: (mPtr: NativePointer, len?: number) => void
 
     var asOcObj: (mPtr: NativePointer) => ObjC.Object
     var asOcObjtoString: (mPtr: NativePointer) => string

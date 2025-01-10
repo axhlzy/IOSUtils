@@ -75,7 +75,7 @@ const hook_ViewController = () => {
     }
 }
 
-const hook_UIAlertController = () => {
+const hook_UIAlertController = (pbt:boolean = false) => {
 
     // UIAlertController + alertControllerWithTitle:message:preferredStyle:
     Interceptor.attach(ObjC.classes["UIAlertController"]["+ alertControllerWithTitle:message:preferredStyle:"].implementation, {
@@ -88,6 +88,7 @@ const hook_UIAlertController = () => {
             const _actions = instance.$ivars["_actions"] as ObjC.Object
             const count = _actions["- count"]()
             logz(`\t${instance} | actions:${_actions.handle} [ ${count} ]`)
+            if (pbt) printBacktrace(this.context)
         }
     })
 
@@ -103,6 +104,7 @@ const hook_UIAlertController = () => {
             const _actions = instance.$ivars["_actions"] as ObjC.Object
             const count = _actions["- count"]()
             logz(`\t${instance} | actions:${_actions} [ ${count} ]`)
+            if (pbt) printBacktrace(this.context)
         }
     })
 
@@ -110,8 +112,13 @@ const hook_UIAlertController = () => {
     Interceptor.attach(ObjC.classes["UIAlertAction"]["+ actionWithTitle:style:handler:"].implementation, {
         onEnter(args) {
             const title = new ObjC.Object(args[2])
-            // !todo parse Block
-            logd(`\nCalled UIAlertAction actionWithTitle:'${title}' style:'${args[3]}' handler:'${new ObjC.Block(args[4])}'`)
+            try {
+                // !todo parse Block
+                logd(`\nCalled UIAlertAction actionWithTitle:'${title}' style:'${args[3]}' handler:'${new ObjC.Block(args[4])}'`)
+            } catch (error) {
+                logd(`\nCalled UIAlertAction actionWithTitle:'${title}' style:'${args[3]}' handler:'${args[4]}'`)
+            }
+            if (pbt) printBacktrace(this.context)
         }
     })
 

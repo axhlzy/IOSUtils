@@ -41,7 +41,12 @@ globalThis.hook_load_images = () => {
                 LOGJSON(base)
 
                 // 176C290                 EXPORT InitFunc_595
-                Interceptor.replace(base!.base.add(0x176C290), new NativeCallback(() => {
+                // Interceptor.replace(base!.base.add(0x176C290), new NativeCallback(() => {
+                //     logd("nop InitFunc_595")
+                // }, "void", []))
+
+                
+                Interceptor.replace(base!.base.add(0x1675d0c), new NativeCallback(() => {
                     logd("nop InitFunc_595")
                 }, "void", []))
 

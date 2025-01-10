@@ -39,7 +39,7 @@ class Breaker {
                 }
             } catch (error) {
                 const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
-                const method_ptr = call("class_getInstanceMethod", obj, selector)
+                const method_ptr = ObjC.api.class_getInstanceMethod(obj, selector)
                 method = new ObjC.Object(method_ptr) as any
                 impl = call("method_getImplementation", method)
             }
