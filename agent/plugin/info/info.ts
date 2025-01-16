@@ -354,9 +354,21 @@ function methods_potential_jailbreak_detection(DEBUG: boolean) {
     // }
 }
 
+globalThis.appid = ObjC.classes.NSBundle.mainBundle().infoDictionary().objectForKey_("CFBundleIdentifier").toString()
+
+globalThis.dbg = () => {
+    newLine()
+    logw(`${Process.id} ${Process.getCurrentThreadId()} ${appid}`)
+    logz(`debugserver -x backboard 0.0.0.0:1235 ${Process.mainModule.path}`)
+    logz(`debugserver -x backboard 0.0.0.0:1235 -a ${Process.id}`)
+    newLine()
+}
+
 declare global {
     var showInfo: (jailbreak?: boolean) => void
     var show_binarycookies: () => void
+    var appid: () => string
+    var dbg: () => void
 }
 
 globalThis.showInfo = (jailbreak: boolean = false) => {

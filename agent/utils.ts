@@ -485,26 +485,121 @@ globalThis.nameToMethod = (method: string): ObjC.ObjectMethod => {
     }
 }
 
-globalThis.addressToMethod = (mPtr: NativePointer): ObjC.ObjectMethod => {
-    return nameToMethod(DebugSymbol.fromAddress(mPtr).name!)
-}
+globalThis.addressToMethod = (mPtr: NativePointer | number): ObjC.ObjectMethod => nameToMethod(DebugSymbol.fromAddress(mPtr instanceof NativePointer ? mPtr : ptr(mPtr)).name!)
 
 globalThis.showAsm = (mPtr: NativePointer, len: number = 0x20) => {
     const l_mPtr = checkPointer(mPtr)
     let next: NativePointer = l_mPtr
     newLine()
     const sym = DebugSymbol.fromAddress(l_mPtr)
-    if (sym.moduleName != null) logw(`${sym.moduleName} | ${sym.name} @ ${sym.address}\n`)
+
+    let status_func_start: boolean = false
+    let method: undefined | ObjC.ObjectMethod = undefined
+    let methodCount: number = 2
+    type Args = { index: number; address: NativePointer; extra: string }
+    const argsMap = new Map<number, Args>();
+
+    // log function title
+    if (sym.moduleName != null && sym.name != null) {
+        const base = new ApiResolver('objc').enumerateMatches(sym.name)[0].address
+        let ext: string = ''
+        if (!base.equals(sym.address)) ext += `${sym.address.sub(base)}`
+        else {
+            status_func_start = true
+            method = addressToMethod(base)
+            methodCount = call("method_getNumberOfArguments", method.handle).toInt32()
+        }
+        logw(`${sym.moduleName} | ${sym.name} @ ${base} ${ext}\n`)
+    }
+
+    // instruction iterator
     while (len-- > 0) {
         try {
-            const ins = Instruction.parse(next)
-            logd(`${ins.address} ${ins.mnemonic} ${ins.opStr}`)
+            // only deal with arm64
+            const ins = Instruction.parse(next) as Arm64Instruction
+            const logMsg = `\t${ins.address} ${ins.mnemonic} ${ins.opStr}`
+            check_instance_args(ins, methodCount) ? loge(logMsg) : logd(logMsg)
+            check_info_BL_B(ins)
+            check_info_LDR_ADD(ins)
             next = ins.next
         } catch (error) {
             // ...
         }
     }
     newLine()
+    LOGJSON(argsMap)
+
+    function check_info_BL_B(ins: Arm64Instruction): void {
+        try {
+            const op = ins.operands[0]
+            // check bl 
+            if ((ins.mnemonic == 'bl' || ins.mnemonic == 'b') && op.access == "r" && op.type == "imm")
+                logz(`\t\t-> ${DebugSymbol.fromAddress(ptr(op.value.toNumber())).name}`)
+        } catch (error) {
+            // do notiong
+            loge(error)
+        }
+    }
+
+    function check_info_LDR_ADD(ins: Arm64Instruction): void {
+        try {
+            // check 
+            // 0x10435b438 adrp x0, #0x104621000
+            // 0x10435b43c add x0, x0, #0x8c8
+            if (ins.mnemonic == 'add'
+                && ins.operands[0].access == "w" && ins.operands[0].type == "reg"
+                && ins.operands[1].access == "r" && ins.operands[1].type == "reg"
+                && ins.operands[2].access == "r" && ins.operands[2].type == "imm"
+                && ins.regsAccessed.read.toString() == ins.regsAccessed.written.toString()
+            ) {
+                const offet = ins.operands[2].value.toNumber()
+                const lastIns = Instruction.parse(ins.address.sub(ins.size)) as Arm64Instruction
+                if (lastIns.mnemonic == 'adrp'
+                    && lastIns.operands[0].access == "w" && lastIns.operands[0].type == "reg"
+                    && lastIns.operands[1].access == "r" && lastIns.operands[1].type == "imm"
+                    && lastIns.regsAccessed.written.toString() == ins.regsAccessed.read.toString()) {
+                    const base = lastIns.operands[1].value.toNumber()
+                    const addr = ptr(base).add(offet)
+                    try {
+                        const name = DebugSymbol.fromAddress(addr).name
+                        if (name != null) {
+                            logz(`\t\t-> ${addr} ${name}`)
+                        } else {
+                            const p = addr.readPointer().readPointer()
+                            logz(`\t\t! ${p} "${new ObjC.Object(addr)}" | ${DebugSymbol.fromAddress(p).name}`)
+                        }
+                    } catch (error) {
+                        loge(error)
+                    }
+                }
+            }
+        } catch (error) {
+            loge(error)
+        }
+    }
+
+    function check_instance_args(ins: Arm64Instruction, findNumberOfargs: number = 2): boolean {
+        if (!status_func_start || argsMap.size == findNumberOfargs) return false
+        for (let regIndex = 0; regIndex < findNumberOfargs; regIndex++) {
+            const condition_operands_r = ins.operands.find(op => op.access == "r" && op.type == "reg" && op.value.toString() == `x${regIndex}`)
+            const condition_regsAccessed_r = ins.regsAccessed.read.toString().includes(`x${regIndex}`)
+            if (condition_operands_r && condition_regsAccessed_r) {
+                return addToArgsArray({
+                    index: regIndex,
+                    address: ins.address,
+                    extra: ins.opStr
+                })
+            }
+        }
+        return false
+
+        function addToArgsArray(args: Args) {
+            if (!argsMap.has(args.index)) {
+                argsMap.set(args.index, args)
+                return true
+            } else return false
+        }
+    }
 }
 
 globalThis.dis = globalThis.showAsm
@@ -725,7 +820,7 @@ declare global {
     var stk: (mPtr: NativePointer) => void
 
     var isObjcInstance: (mPtr: NativePointer) => NativePointer
-    var addressToMethod: (mPtr: NativePointer) => ObjC.ObjectMethod
+    var addressToMethod: (mPtr: NativePointer | number) => ObjC.ObjectMethod
     var nameToMethod: (name: string) => ObjC.ObjectMethod
 
     var showAsm: (mPtr: NativePointer, len?: number) => void

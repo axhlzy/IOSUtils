@@ -4,8 +4,8 @@ import { hook_NSProcessInfo } from './plugin/exp/NSProcessInfo.js'
 import { hook_pthread_ } from './plugin/exp/pthread_.js'
 import { SIGNAL } from './plugin/memory/findsvc.js'
 
-logd(`PID:\t${Process.id}`)
-logd(`TID:\t${Process.getCurrentThreadId()}`)
+// logd(`PID:\t${Process.id}`)
+// logd(`TID:\t${Process.getCurrentThreadId()}`)
 
 // hook_strcmp()
 // hook_all_detect()
@@ -46,6 +46,26 @@ logd(`TID:\t${Process.getCurrentThreadId()}`)
 //         logw(`\nCalled ISLanguageSetupController \n\t${ins} \n\t${sel} \n\tsetLanguage:'${value}'`)
 //     }
 // }) 
+
+// FBProcessExecutionContext setDisableASLR
+// Interceptor.attach(ObjC.classes["FBProcessExecutionContext"]["- setDisableASLR:"].implementation, {
+//     onEnter(args) {
+//         const ins = new ObjC.Object(args[0])
+//         const value = args[2]
+//         args[2] = ptr(1)
+//         logw(`\nCalled setDisableASLR: ${ins} ${value}`)
+//     }
+// })
+
+// // FBProcessExecutionContext - disableASLR
+// Interceptor.attach(ObjC.classes["FBProcessExecutionContext"]["- disableASLR"].implementation, {
+//     onEnter(args) {
+//     },
+//     onLeave(retval) {
+//         logw(`\nCalled disableASLR: ${retval}`)
+//         retval.replace(ptr(1))
+//     }
+// })
 
 // // -[FBProcessExecutionContext setWatchdogProvider:0x2828c1760]
 // Interceptor.attach(ObjC.classes["FBProcessExecutionContext"]["- setWatchdogProvider:"].implementation, {
