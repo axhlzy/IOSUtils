@@ -1,5 +1,3 @@
-import { xas } from "../../../utils"
-
 var cacheAllClass: ObjC.Object[] = []
 
 globalThis.cacheAllClass = cacheAllClass
@@ -414,11 +412,9 @@ export const packArgs = (arg: NativePointer, type: string | argType): string => 
         case "block":
             // xa(arg) // for debug
             try {
-                // type 
-                const r_ptr = arg.readPointer() 
-                const blockType = DebugSymbol.fromAddress(r_ptr).name
-                return `${blockType} ${r_ptr} | ${xas(arg)}`
-                // 下面这一堆真的是。。。。 做的越多错的越多，自行解析block了（下面这是参考解析）
+                return `\n${xas(arg, 5 , '~')}`
+                // return `${blockType} ${r_ptr}`
+                // 自行解析block的参考
                 // // size 
                 // const size = arg.add(Process.pointerSize * 1).readPointer()
                 // // functionAddress

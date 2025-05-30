@@ -308,13 +308,13 @@ globalThis.lfs = (ptrArg: NativePointer | string | number, ret: boolean = false)
     0x280c5bd18 -> 0x1a1bee114         |    ContactsAutocompleteUI ! __44-[CNComposeRecipientTextView initWithFrame:]_block_invoke
     0x280c5bd18 -> 0x1ef275b48         |    ContactsAutocompleteUI ! __block_descriptor_40_e8_32w_e24_v16?0"NSNotification"8l
  */
-globalThis.xa = (ptr: NativePointer | string | number, count: number = 5) => {
+globalThis.xa = (ptr: NativePointer | string | number, count: number = 5): void => {
     newLine()
     logd(xas(ptr))
     newLine()
 }
 
-export function xas(ptr: NativePointer | string | number, count: number = 5) {
+globalThis.xas = (ptr: NativePointer | string | number, count: number = 5, split:string = '|'): string => {
     const mPtr = checkPointer(ptr)
     let ret = ''
     for (let i = 0; i < count; i++) {
@@ -322,8 +322,8 @@ export function xas(ptr: NativePointer | string | number, count: number = 5) {
         const current = indexAddress.add(i * Process.pointerSize).readPointer()
         const sym = DebugSymbol.fromAddress(current)
         const mdName = sym.moduleName
-        const symDisp = mdName == null ? "" : `${mdName} ! ${sym.name}`
-       ret += `${indexAddress} -> ${current.toString().padEnd(4 + Process.pointerSize * 2, ' ')}|\t${symDisp}\n`
+        const symDisp = mdName == null ? '' : `${mdName} ! ${sym.name}`
+        ret += `${indexAddress} -> ${current.toString().padEnd(4 + Process.pointerSize * 2, ' ')}${split}\t${symDisp}\n`
     }
     return ret.trimEnd()
 }
@@ -869,6 +869,7 @@ declare global {
     var callOcOnMain: (objPtr: NativePointer | string | number | ObjC.Object, funcName: string, ...args: any | NativePointer | ObjC.Object) => void
     var lfs: (ptr: NativePointer | string | number) => void
     var xa: (ptr: NativePointer | string | number, count?: number) => void
+    var xas: (ptr: NativePointer | string | number, count?: number, split?:string) => string
     var choose: (className: string, callBack?: (item: ObjC.Object) => void | undefined) => void
 
     var getIvars: (clazz: NativePointer | string | number | ObjC.Object) => Array<{ objClazz: ObjC.Object, handle: NativePointer, name: string, offset: number }>
