@@ -7,7 +7,6 @@ export class ObjCMethodIMPL extends ObjC.Object {
     get ptr(){
         return this.implememtation
     }
- 
 }
 
 declare global{

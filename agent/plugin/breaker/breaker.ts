@@ -1,17 +1,24 @@
 import { HK_TYPE } from "../../utils.js"
+import { argType, getArgsAndRet, packArgs, parseType } from "../lang/oc/oc.js"
 
 export { }
 
-class Breaker {
+const default_hook_type = HK_TYPE.OBJC_REP
 
+class Breaker {
     // ref function ptr => IMP
-    public static attachImpl(mPtr: NativePointer | number | string, defaultArgsC: number = 4) {
-        new objc_method(addressToMethod(checkPointer(mPtr) as NativePointer).handle).hook(HK_TYPE.FRIDA_REP, true, defaultArgsC)
+    public static attachImpl(mPtr: NativePointer, hookType: HK_TYPE = default_hook_type) {
+        objc_method.fromAddress(mPtr).hook(hookType)
     }
 
     //  ref Method => Method
-    public static attachMethod(mPtr: NativePointer | number | string, force: boolean = false) {
-        new objc_method(mPtr).hook(HK_TYPE.OBJC_REP, true, 6, force)
+    public static attachMethod(method: ObjectWrapper, bt: boolean = false, hookType: HK_TYPE = default_hook_type) {
+        objc_method.fromMethod(method).hook(hookType, false, bt)
+    }
+
+    // -[Viber.AddFriendViewControllerInjectionImpl addressBook]
+    public static attachMethodString(hkStr: string, hookType: HK_TYPE = default_hook_type) {
+        objc_method.fromString(hkStr).hook(hookType)
     }
 
     // ref Class / ObjC.Object
@@ -21,7 +28,7 @@ class Breaker {
         const localObj = new ObjC.Class(localPtr) // ref Class
         Breaker.itorMethod(localObj, (method: ObjC.ObjectMethod, _impl) => {
             const methodName = `${ObjC.selectorAsString(method.selector)}`
-            if (methodName.includes(filterMethodNameStr)) Breaker.attachMethod(method.handle, force)
+            if (methodName.includes(filterMethodNameStr)) Breaker.attachMethod(method)
             // else logz(`${method.implementation} -> ${methodName} | Warn: filter method name`)
         })
     }
@@ -35,7 +42,8 @@ class Breaker {
                 try {
                     impl = method.implementation
                 } catch (error) {
-                    impl = OC_Hook_Status.getNewImplFromOCMethod(method)!
+                    // impl = Hook_Status.getNewImplFromOCMethod(objc_method.fromMethod(method))!
+                    throw error
                 }
             } catch (error) {
                 const selector = call("NSSelectorFromString", allocOCString(m.substring(m.indexOf(' ') + 1)))
@@ -57,10 +65,9 @@ class Breaker {
         }
         new ApiResolver(type).enumerateMatches(filter).forEach((item, index) => {
             try {
-                const method = addressToMethod(item.address)
-                const md = Process.findModuleByAddress(item.address)
-                logd(`[${index}] \taddr:${item.address} offset:${md?.name}@${item.address.sub(md?.base!)} ${item.name} ObjM:${method.handle}`)
-                Breaker.attachMethod(method.handle)
+                // debug info
+                // logd(`[${index}] \taddr:${item.address} offset:${md?.name}@${item.address.sub(md?.base!)} ${item.name} ObjM:${method.handle}`)
+                Breaker.attachImpl(item.address)
             } catch (error) {
                 loge(`${item.address} ${error}`)
             }
@@ -69,13 +76,40 @@ class Breaker {
 }
 
 declare global {
+    // 针对类方法简单解析
     var B: (mPtr: NativePointer | number | string | ObjC.Object, filter?: string) => void
+    // 针对方法名过滤批量hook
+    var BF: (fMethodName: string, filterClass?: string, type?: ApiResolverType) => void
+    // 针对单个方法
     var b: (mPtr: NativePointer | number | string) => void
 
-    var BF: (fMethodName:string , filterClass?: string, type?: ApiResolverType) => void
+    // hook 一个地址
+    var ba: (mPtr: NativePointer | number | string) => void
 }
 
-globalThis.b = (mPtr: NativePointer | number | string) => { Breaker.attachMethod(mPtr, true) }
-globalThis.B = Breaker.attachClass
+globalThis.b = (mPtr: NativePointer | number | string, bt: boolean = false) => {
+    if (typeof mPtr == 'number') mPtr = ptr(mPtr)
+    if (typeof mPtr == 'string') {
+        if (mPtr.startsWith("0x")) mPtr = ptr(mPtr)
+        else return Breaker.attachMethod(nameToMethod(mPtr), bt)
+    }
+    Breaker.attachMethod(new ObjC.Object(mPtr), bt)
+}
 
+globalThis.B = Breaker.attachClass
 globalThis.BF = Breaker.attachMethodsByFilter
+
+globalThis.ba = (mPtr: NativePointer | number | string, argC: number = 4, bt: boolean = false) => {
+    mPtr = checkPointer(mPtr)
+    Interceptor.attach(mPtr, {
+        onEnter: function (args) {
+            let argsStr: string[] = []
+            for (let i = 0; i < argC; i++) argsStr.push(args[i].toString())
+            this.msg = (`Called -> ${mPtr} [ ${argsStr.join(', ')} ]`)
+        },
+        onLeave: function (retval) {
+            logd(`${this.msg} => ${retval}`)
+            if (bt) logz(`called from:\n${Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n\t')}\n`)
+        }
+    })
+}

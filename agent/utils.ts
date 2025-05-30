@@ -297,19 +297,35 @@ globalThis.lfs = (ptrArg: NativePointer | string | number, ret: boolean = false)
     if (ret) return $clonedIvars
 }
 
-// similar to x/a (lldb)
+// similar to x/a (lldb) 
+/**
+ * example:
+ * can use at block
+ * [Remote::MobileSMS ]-> xa(0x280c5bd18)
+    0x280c5bd18 -> 0x280c5bd20         |
+    0x280c5bd18 -> 0x1f6528a68         |    libsystem_blocks.dylib ! _NSConcreteMallocBlock
+    0x280c5bd18 -> 0xc3000002          |
+    0x280c5bd18 -> 0x1a1bee114         |    ContactsAutocompleteUI ! __44-[CNComposeRecipientTextView initWithFrame:]_block_invoke
+    0x280c5bd18 -> 0x1ef275b48         |    ContactsAutocompleteUI ! __block_descriptor_40_e8_32w_e24_v16?0"NSNotification"8l
+ */
 globalThis.xa = (ptr: NativePointer | string | number, count: number = 5) => {
-    const mPtr = checkPointer(ptr)
     newLine()
+    logd(xas(ptr))
+    newLine()
+}
+
+export function xas(ptr: NativePointer | string | number, count: number = 5) {
+    const mPtr = checkPointer(ptr)
+    let ret = ''
     for (let i = 0; i < count; i++) {
         const indexAddress = mPtr
         const current = indexAddress.add(i * Process.pointerSize).readPointer()
         const sym = DebugSymbol.fromAddress(current)
         const mdName = sym.moduleName
         const symDisp = mdName == null ? "" : `${mdName} ! ${sym.name}`
-        logd(`${indexAddress} -> ${current.toString().padEnd(4 + Process.pointerSize * 2, ' ')}|\t${symDisp}`)
+       ret += `${indexAddress} -> ${current.toString().padEnd(4 + Process.pointerSize * 2, ' ')}|\t${symDisp}\n`
     }
-    newLine()
+    return ret.trimEnd()
 }
 
 globalThis.getBacktrace = (ctx: CpuContext): string => `called from:\n${Thread.backtrace(ctx, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n\t')}\n`
@@ -472,18 +488,47 @@ globalThis.isObjcInstance = (mPtr: NativePointer): NativePointer => {
 }
 
 // +[UPWDeviceUtil deviceOSVersion] => {clsName, methodName}
+// globalThis.nameToMethod = (method: string): ObjC.ObjectMethod => {
+//     if (method[1] == '[' && method.endsWith(']')) {
+//         const methodL = method.slice(2, -1)
+//         const parts = methodL.split(' ')
+//         if (parts.length != 2) throw new Error("Invalid format, there should be exactly one space.")
+//         const className = parts[0]
+//         const classMethod = `${method[0]} ${parts[1]}`
+//         return ObjC.classes[className][classMethod]
+//     } else {
+//         throw new Error("Invalid format, should start with '+[' / '-[' and end with ']'")
+//     }
+// }
 globalThis.nameToMethod = (method: string): ObjC.ObjectMethod => {
-    if (method[1] == '[' && method.endsWith(']')) {
-        let methodL = method.slice(2, -1)
-        const parts = methodL.split(' ')
-        if (parts.length != 2) throw new Error("Invalid format, there should be exactly one space.")
+    if (method[1] === '[' && method.endsWith(']')) {
+        const methodContent = method.slice(2, -1).trim()  // 去掉前缀 -[ 和 后缀 ]
+        const parts = methodContent.split(' ')
+        if (parts.length < 2) {
+            throw new Error("Invalid format, should contain class and selector.")
+        }
+
         const className = parts[0]
-        const classMethod = `${method[0]} ${parts[1]}`
-        return ObjC.classes[className][classMethod]
+
+        // 将后续部分合并回 selector 字符串（并剔除地址参数）
+        const selectorRaw = parts.slice(1).join(' ')
+        // 将带地址的选择器（比如 xxx:0x123 yyy:0x456）转为 xxx:yyy:
+        const selectorCleaned = selectorRaw
+            .split(/\s+/)
+            .map(seg => {
+                const colonIndex = seg.indexOf(':')
+                return colonIndex !== -1 ? seg.substring(0, colonIndex + 1) : seg
+            })
+            .join('')
+
+        const fullSelector = `${method[0]} ${selectorCleaned}` // 恢复成 `- selector:` 形式
+        return ObjC.classes[className][fullSelector]
     } else {
         throw new Error("Invalid format, should start with '+[' / '-[' and end with ']'")
     }
 }
+
+export const TIME_SIMPLE = (): string => new Date().toLocaleTimeString().split(" ")[0]
 
 globalThis.addressToMethod = (mPtr: NativePointer | number): ObjC.ObjectMethod => nameToMethod(DebugSymbol.fromAddress(mPtr instanceof NativePointer ? mPtr : ptr(mPtr)).name!)
 
@@ -783,6 +828,29 @@ globalThis.choose = (className: string | ObjC.Object | number | NativePointer, c
             logw(e)
         }
     })
+}
+
+// oc print stack 
+// if use ObjC.implement to hook, you can use this
+export function printObjcStackTrace(message = "Current Objective-C Stack Trace") {
+    try {
+        const NSThread = ObjC.classes.NSThread
+        if (!NSThread) {
+            loge("[Frida] NSThread class not found. Cannot print Objective-C stack trace.")
+            return
+        }
+        const callStackSymbols = NSThread.callStackSymbols()
+
+        logw(`\n--- ${message} ---`)
+        for (let i = 0; i < callStackSymbols.count(); i++) {
+            const symbol = callStackSymbols.objectAtIndex_(i)
+            logz(`  ${symbol.toString()}`)
+        }
+        logz("-------------------------------------------\n")
+
+    } catch (e) {
+        loge(`[Frida] Error printing Objective-C stack trace: ${e}`)
+    }
 }
 
 declare global {

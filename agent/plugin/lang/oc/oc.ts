@@ -1,3 +1,5 @@
+import { xas } from "../../../utils"
+
 var cacheAllClass: ObjC.Object[] = []
 
 globalThis.cacheAllClass = cacheAllClass
@@ -43,7 +45,7 @@ globalThis.findMethodsByResolver = (query: string) => {
                 //         args[1]:        : - selector
 
             } catch (error) {
-                
+
             }
             logd(`[ ${count++} ]\t${m.address}\t${m.name}`)
         })
@@ -57,12 +59,12 @@ const getClassFromMethodName = (name: string, filterClass: Array<ObjC.Object>): 
     }
 }
 
-export function getClassPtrDebugInfo(cls:ObjC.Object) {
+export function getClassPtrDebugInfo(cls: ObjC.Object) {
     try {
         const debugSym = DebugSymbol.fromAddress(cls.handle)
         const md = Process.findModuleByName(debugSym.moduleName!)
         return `${debugSym.name} IN ${debugSym.moduleName} [ ${md?.path} ${ptr(md?.size!)} ]`
-    } catch (error) { 
+    } catch (error) {
         return ''
     }
 }
@@ -262,7 +264,13 @@ globalThis.showMethod = (method: number | string | NativePointer, extName?: stri
 
     let localM: NativePointer | ObjC.ObjectMethod = NULL
     try {
-        localM = checkPointer(method)
+        if (typeof method === 'number') {
+            localM = checkPointer(method)
+        } else if (typeof method === 'string') {
+            localM = nameToMethod(method).handle
+        } else if (method instanceof NativePointer) {
+            localM = checkPointer(method)
+        } else throw new Error(`method must be a number or string or NativePointer, but got ${method}`)
     } catch (error) {
         // try use ApiResolver to find (methodName)
         if (typeof method == "string") {
@@ -336,27 +344,101 @@ globalThis.showMethod = (method: number | string | NativePointer, extName?: stri
     }
 
     const pk = getArgsAndRet(localM)
-    logd(`ReturnType`)
-    logd(`\tret: \t\t${pk.ret} - ${parseType(pk.ret)}`)
     logd('ArgumentTypes')
     pk.args.forEach((item, index) => logd(`\targs[${index}]:\t${item} - ${parseType(item)}`))
+    logd(`ReturnType`)
+    logd(`\tret: \t\t${pk.ret} - ${parseType(pk.ret)}`)
     logs(getLine(60, '-'))
 }
 
-export const packArgs = (arg: NativePointer, type: string): string => {
+globalThis.showMethodSignature = (method: number | string | NativePointer, extName?: string) => {
+    let localM: NativePointer | ObjC.ObjectMethod = NULL
+    try {
+        if (typeof method === 'number') {
+            localM = checkPointer(method)
+        } else if (typeof method === 'string') {
+            localM = nameToMethod(method).handle
+        } else if (method instanceof NativePointer) {
+            localM = checkPointer(method)
+        } else throw new Error(`method must be a number or string or NativePointer, but got ${method}`)
+    } catch (error) {
+        // try use ApiResolver to find (methodName)
+        if (typeof method == "string") {
+            let found: ApiResolverMatch[]
+            if (method.includes('[')) {
+                found = new ApiResolver("objc").enumerateMatches(method)
+            } else {
+                found = new ApiResolver("objc").enumerateMatches(`*[* ${method}]`)
+            }
+            if (found != undefined && found != null && found.length != 0) {
+                found.forEach(item => showMethod(nameToMethod(item.name).handle, item.name))
+            } else {
+                throw new Error(`Not Found -> ${method}`)
+            }
+            return
+        } else throw error
+    }
+
+    const typeEncoding = ObjC.api.method_getTypeEncoding(localM).readCString()
+    logd(ObjC.classes.NSMethodSignature["signatureWithObjCTypes:"](allocCString(typeEncoding)).debugDescription().toString())
+}
+
+export enum argType {
+    string = "string",
+    class = "class",
+    object = "object",
+    selector = "selector",
+    bool = "bool",
+    void = "void"
+}
+
+export const packArgs = (arg: NativePointer, type: string | argType): string => {
     // todo
     switch (type) {
         case "string": return arg.readCString() == null ? "" : arg.readCString()!
         case "class": return new ObjC.Object(arg).toString()
         case "object": return new ObjC.Object(arg).toString()
-        case "selector": return ObjC.selectorAsString(arg)
-        case "bool": return `${arg} => ${new Boolean(arg).toString()}`
+        case "const pointer": return hexdump(arg, { ansi: true ,length: 0x40})
+        case "selector":
+            try {
+                return ObjC.selectorAsString(arg)
+            } catch (error) {
+                return arg.readCString() == null ? "" : arg.readCString()!
+            }
+        case "int":
+        case "int16":
+        case "int64": 
+        case "uint":
+        case "uint64": return `${ptr(arg as any).toInt32()} <- ${ptr(arg as any)}`
+        case "bool": return `${(ptr(arg as any)).toInt32() == 0 ? "false" : "true"}`
+        case "block":
+            // xa(arg) // for debug
+            try {
+                // type 
+                const r_ptr = arg.readPointer() 
+                const blockType = DebugSymbol.fromAddress(r_ptr).name
+                return `${blockType} ${r_ptr} | ${xas(arg)}`
+                // 下面这一堆真的是。。。。 做的越多错的越多，自行解析block了（下面这是参考解析）
+                // // size 
+                // const size = arg.add(Process.pointerSize * 1).readPointer()
+                // // functionAddress
+                // const functionAddress = arg.add(Process.pointerSize * 2).readPointer()
+                // const debugInfo = DebugSymbol.fromAddress(functionAddress)
+                // // ctx
+                // const ctx = arg.add(Process.pointerSize * 3).readPointer()
+                // // self
+                // const self = arg.add(Process.pointerSize * 4).readPointer()
+                // const self_str = self.isNull() ? "nil" : (`${new ObjC.Object(self)}`)
+                // return `${debugInfo.moduleName} ! ${debugInfo.name} | self:${self_str} | type:${blockType} | ctx:${ctx} | size:${size}`
+            } catch (error) {
+                return ''
+            }
         case "void": ''
         default: return `${arg as unknown as NativePointer}`
     }
 }
 
-export const getArgsAndRet = (method: NativePointer): { ret: string, args: Array<string> } => {
+export const getArgsAndRet = (method: NativePointer): { ret: string | argType, args: Array<string | argType> } => {
 
     let packArgsAndRet: { ret: string, args: Array<string> } = { ret: "", args: [] }
 
@@ -405,13 +487,15 @@ export const parseType = (typeStr: string | null, toDisplay: boolean = true): st
         'f': 'float',
         'd': 'double',
         'B': 'bool',        // BOOL
+        '^B': 'bool',        // OUT BOOL ? 
         'b': 'bool',
         'v': 'void',
         '*': 'string',      // char *
         '@': 'object',      // id
-        '@?': 'block',
+        '@?': 'block',      // block ？ object
         '#': 'class',       // Class
         ':': 'selector',    // SEL
+        'r^v': 'const pointer',    // const void * 
         '^v': 'pointer'     // void *
     }
 
@@ -420,7 +504,8 @@ export const parseType = (typeStr: string | null, toDisplay: boolean = true): st
         'object': 'pointer',
         'block': 'pointer',
         'class': 'pointer',
-        'selector': 'pointer'
+        'selector': 'pointer',
+        'const pointer': 'pointer',
     }
 
     if (typeStr == null || typeStr == undefined) return ''
@@ -494,10 +579,10 @@ const watch_getClass = () => {
     // OBJC_EXPORT void objc_setHook_getClass(objc_hook_getClass _Nonnull newValue, objc_hook_getClass _Nullable * _Nonnull outOldValue)
 }
 
-globalThis.printDictionary = (dictionary: ObjC.Object | NativePointer | number | string)=> {
+globalThis.printDictionary = (dictionary: ObjC.Object | NativePointer | number | string) => {
     let dis: ObjC.Object
     if (dictionary instanceof NativePointer) dis = new ObjC.Object(dictionary)
-    else if (typeof dictionary =="number" || (typeof dictionary =="string" && dictionary.startsWith("0x"))) dis = new ObjC.Object(ptr(dictionary))
+    else if (typeof dictionary == "number" || (typeof dictionary == "string" && dictionary.startsWith("0x"))) dis = new ObjC.Object(ptr(dictionary))
     else if (dictionary instanceof ObjC.Object) dis = dictionary
     else throw new Error('Error dictionary(args[0]), Need ObjC.Object or NativePointer')
     const keys = dis.allKeys()
@@ -511,7 +596,7 @@ globalThis.printDictionary = (dictionary: ObjC.Object | NativePointer | number |
 globalThis.printArray = (array: ObjC.Object | NativePointer | number | string) => {
     let arr: ObjC.Object
     if (array instanceof NativePointer) arr = new ObjC.Object(array)
-    if (typeof array =="number" || (typeof array =="string" && array.startsWith("0x"))) arr = new ObjC.Object(ptr(array))
+    if (typeof array == "number" || (typeof array == "string" && array.startsWith("0x"))) arr = new ObjC.Object(ptr(array))
     else if (array instanceof ObjC.Object) arr = array
     else throw new Error('Error array(args[0]), Need ObjC.Object or NativePointer')
     const count = arr.count()
@@ -524,20 +609,20 @@ globalThis.printArray = (array: ObjC.Object | NativePointer | number | string) =
 
 globalThis.printSet = (set: ObjC.Object | NativePointer | number | string) => {
     let objSet: ObjC.Object
-    
+
     if (set instanceof NativePointer) objSet = new ObjC.Object(set)
     else if (typeof set === "number" || (typeof set === "string" && set.startsWith("0x"))) objSet = new ObjC.Object(ptr(set))
     else if (set instanceof ObjC.Object) objSet = set
     else throw new Error('Error set(args[0]), Need ObjC.Object or NativePointer')
-    
+
     const allObjects = objSet.allObjects()
     const count = allObjects.count()
-    
+
     if (count === 0) {
         loge('Null set')
         return
     }
-    
+
     for (let i = 0; i < count; i++) {
         const value = allObjects.objectAtIndex_(i)
         logd(`Index: ${i}, Value: ${value.toString()}`)
@@ -552,6 +637,7 @@ declare global {
     var getFields: (cls: number | string | NativePointer) => Array<string>
     var showMethod: (method: number | string | NativePointer, extName?: string) => void
     var findMethods: (query: string, className?: string, accurate?: boolean) => void
+    var showMethodSignature: (method: number | string | NativePointer, extName?: string) => void
     var findMethodsByResolver: (query: string) => void
     var findClasses: (query: string) => void
 
@@ -561,7 +647,7 @@ declare global {
     var getSuperClasses: (ptr: NativePointer | number | string | ObjC.Object) => Array<ObjC.Object>
     var showSubClasses: (ptr: NativePointer | number | string | ObjC.Object) => void
 
-    var printDictionary: (dictionary: ObjC.Object | NativePointer | number | string)=>void
+    var printDictionary: (dictionary: ObjC.Object | NativePointer | number | string) => void
     var printArray: (array: ObjC.Object | NativePointer | number | string) => void
     var printSet: (array: ObjC.Object | NativePointer | number | string) => void
 }

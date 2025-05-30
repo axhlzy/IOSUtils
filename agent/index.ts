@@ -22,7 +22,7 @@ import { SIGNAL } from './plugin/memory/findsvc.js'
 // hook_dispatch()
 // hook_NSProcessInfo()
 // hook_pthread_()
-
+ 
 // showInfo()
 
 // examples ↓ 
@@ -388,3 +388,11 @@ import { SIGNAL } from './plugin/memory/findsvc.js'
 //     }
 // })
 
+// ObjC.choose(ObjC.classes.PhoneService,{
+//     onMatch(item) {
+//         logw(`\nPhoneService: ${item}`)
+//     },
+//     onComplete() {
+//         logw(`\nPhoneService: search complete`)
+//     },
+// })
