@@ -23,6 +23,14 @@ Completing a more comprehensive IOS reverse toolkit
 - ` lfs: (ptr: NativePointer | string | number) => void `
 
     ![1726306420619](https://github.com/user-attachments/assets/d2d854d2-6345-4fc1-994c-13bb8c134733)
+  
+- ` b: (ptr: NativePointer | string | number) => void `
+
+    ![dfab4338-93ac-49f7-81ab-4c56ec381363](https://github.com/user-attachments/assets/c69ac9b6-cefb-4d29-88a9-c8789e1693ad)
+
+- ` B: (ptr: NativePointer | string | number) => void `
+
+    ![c4b97744-2b5f-41d2-b99d-569338129b9e](https://github.com/user-attachments/assets/815c1b7d-603e-4a18-9937-b33a70bbcb1a)
 
 
 ## Others
